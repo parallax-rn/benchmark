@@ -18,7 +18,12 @@ finished). Cost is the API list price Claude Code reports, not a bill.
 | Shell only | 15/15 | 40 s | 195k | $0.07 | 16 |
 | Parallax 0.1.0-beta.3 | 15/15 | 36 s | 205k | $0.07 | 16 |
 | agent-device 0.21.36 | 15/15 | 36 s | 204k | $0.09 | 11 |
-| Argent 0.31.1 | 15/15 | 71 s | 772k | $0.22 | 29 |
+| Argent 0.31.1 | not valid, see below | | | | |
+
+**Argent's R1 runs are not valid (found 2026-11-11).** Our harness gave every agent an isolated `HOME`. Argent's simulator server looks for
+simulators under `$HOME/Library/Developer/CoreSimulator/Devices`, which was empty there, so every Argent tap and screenshot failed (48 of 48
+taps, 14 of 14 screenshots) and the agent worked without them. This was our harness's fault, not Argent's; thanks to Błażej Kustra for finding it.
+Its rows stay in `runs.csv` for the record and are left out of the table. All four setups will be rerun on a fixed harness.
 
 Three runs per setup on each runtime bug and one on each control: with three runs, a median is a fair middle, not a precise figure.
 All runs are in [`r1/results/runs.csv`](r1/results/runs.csv): bug, setup, run, fixed, cause_blind, seconds, tokens, cost_usd,
