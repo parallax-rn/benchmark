@@ -1,0 +1,18 @@
+{
+  "_comment": "Plan 0023's arms. Each arm runs with its own CLAUDE_CONFIG_DIR (~/ParallaxBench/arms/<id>/claude, made in R1.3 by the tool's own setup) and copies ~/ParallaxBench/arms/<id>/project over the run folder after the reset (what the tool's setup writes into a project). The base tools and denials are the same for every arm.",
+  "base": {
+    "allowedTools": ["Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "Bash", "TodoWrite"],
+    "disallowedTools": ["Bash(git:*)", "WebFetch", "WebSearch", "Task", "Agent"]
+  },
+  "arms": {
+    "A0": { "name": "no device tool", "allowedTools": [], "disallowedTools": ["Skill(parallax)"] },
+    "A1": { "name": "agent-device", "allowedTools": ["mcp__agent-device__*"], "disallowedTools": ["Skill(parallax)"] },
+    "A2": { "name": "Argent", "allowedTools": ["mcp__argent__*"], "disallowedTools": ["Skill(parallax)"] },
+    "A3": { "name": "Parallax", "allowedTools": ["mcp__parallax__*"] },
+    "A3b3": { "name": "Parallax 0.1.0-beta.3", "allowedTools": ["mcp__parallax__*"] },
+    "A3n": { "name": "Parallax (dev build, navigate)", "allowedTools": ["mcp__parallax__*"] },
+    "A3n2": { "name": "Parallax (dev build, navigate + server instructions)", "allowedTools": ["mcp__parallax__*"] },
+    "A3b4": { "name": "Parallax 0.1.0-beta.4", "allowedTools": ["mcp__parallax__*"] },
+    "A3d": { "name": "Parallax (dev build, app_data storage)", "allowedTools": ["mcp__parallax__*"] }
+  }
+}

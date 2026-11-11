@@ -1,0 +1,33 @@
+{
+  "id": "C1",
+  "category": "control",
+  "symptom": "The cart total is wrong when the same product is added twice.",
+  "cause": "cartTotal adds each item's price once and ignores its quantity.",
+  "where": "src/cart.ts cartTotal",
+  "cause_terms": [
+    "qty|quantity"
+  ],
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "expectText": {
+        "cart/total": "Total: $79.00"
+      }
+    }
+  ],
+  "control": "visible in the source and on the screen; every arm should solve it"
+}

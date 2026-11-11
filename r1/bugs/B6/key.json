@@ -1,0 +1,24 @@
+{
+  "id": "B6",
+  "category": "runtime",
+  "symptom": "On a product page the 'Restocked' line shows no date: it only says 'Restocked'.",
+  "cause": "daysAgo uses Intl.RelativeTimeFormat, which this app's Hermes does not provide (`Intl.RelativeTimeFormat` is undefined, so the constructor throws); the catch returns an empty string. Node and browsers have it, so the code looks right.",
+  "where": "src/relative.ts daysAgo",
+  "cause_terms": [
+    "RelativeTimeFormat",
+    "Hermes|not (available|supported)|undefined|missing"
+  ],
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "expectTextMatches": {
+        "product/restocked": "Restocked \\d+ days? ago"
+      }
+    }
+  ]
+}

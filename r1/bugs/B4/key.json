@@ -1,0 +1,27 @@
+{
+  "id": "B4",
+  "category": "layout / hit",
+  "symptom": "The Add to cart button on a product page does not respond to taps.",
+  "cause": "PromoBadge sizes its transparent full-width container with PixelRatio.getPixelSizeForLayoutSize(140), which is 420 points on a 3x device and covers the Add to cart button, taking its touches.",
+  "where": "src/PromoBadge.tsx height",
+  "cause_terms": [
+    "PromoBadge|badge",
+    "cover|overlay|on top|intercept|absorb"
+  ],
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "expectText": {
+        "product/count": "In cart: 1"
+      }
+    }
+  ]
+}

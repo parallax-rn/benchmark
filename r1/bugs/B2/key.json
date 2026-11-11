@@ -1,0 +1,23 @@
+{
+  "id": "B2",
+  "category": "event order",
+  "symptom": "Every product on the Products list says 'Out of stock', but the warehouse says most of them are in stock.",
+  "cause": "Products asks for the list (slow, about 800 ms) and the stock (fast, about 100 ms) at once and writes the stock into the list's items; the stock answer lands while the list is still null, so `list && ...` drops it and every row falls back to 0.",
+  "where": "src/screens/Products.tsx the loading effect",
+  "cause_terms": [
+    "before|first|order|race|null",
+    "stock"
+  ],
+  "check": [
+    {
+      "open": "Products"
+    },
+    {
+      "expectText": {
+        "row/p1/stock": "In stock",
+        "row/p2/stock": "Out of stock",
+        "row/p3/stock": "In stock"
+      }
+    }
+  ]
+}

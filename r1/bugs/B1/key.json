@@ -1,0 +1,23 @@
+{
+  "id": "B1",
+  "category": "data",
+  "symptom": "Some products on the Products list show '\u2014' instead of a price.",
+  "cause": "The API sends some prices as strings with a decimal comma (\"12,99\"); parsePrice uses Number(), which gives NaN, and formatPrice shows '\u2014'.",
+  "where": "src/price.ts parsePrice",
+  "cause_terms": [
+    "comma",
+    "NaN|not a number"
+  ],
+  "check": [
+    {
+      "open": "Products"
+    },
+    {
+      "expectText": {
+        "row/p2/price": "$12.99",
+        "row/p4/price": "$24.90",
+        "row/p7/price": "$4.50"
+      }
+    }
+  ]
+}

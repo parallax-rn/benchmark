@@ -1,0 +1,25 @@
+{
+  "id": "B3",
+  "category": "swallowed error",
+  "symptom": "Pressing Save on Settings does nothing.",
+  "cause": "The server rejects the 24-character name with 422 and {data: null}; reading data.updatedAt throws a TypeError and the empty catch drops it, so nothing is shown.",
+  "where": "src/screens/Settings.tsx save",
+  "cause_terms": [
+    "422|rejected|too long|20 characters",
+    "catch|swallow"
+  ],
+  "check": [
+    {
+      "open": "Settings"
+    },
+    {
+      "tap": "settings/save"
+    },
+    {
+      "expectTextMatches": {
+        "settings/message": "20|characters|could not|error"
+      }
+    }
+  ],
+  "control": "the pilot of 2026-11-04 showed every arm finds it from the source (the non-null assertion and the empty catch); kept as a control for the cost of a source-visible bug"
+}

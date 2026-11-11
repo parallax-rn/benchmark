@@ -1,0 +1,9 @@
+{
+  "_comment": "Plan 0023: the tool surface each arm gives the agent, measured 2026-11-04 with tools-surface.mjs (tools/list over stdio, plus the instruction files the tool's own setup writes). alwaysBytes: tools/list plus what is loaded every turn (skills and rules that apply always); onDemandBytes: skills and agents loaded only when used. Tokens are bytes / 4, an estimate.",
+  "A0": { "tool": "none", "version": null, "tools": 0, "toolsListBytes": 0, "alwaysBytes": 0, "onDemandBytes": 0 },
+  "A1": { "tool": "agent-device", "version": "0.21.36", "tools": 62, "toolsListBytes": 263667, "alwaysBytes": 263667, "onDemandBytes": 7270 },
+  "A2": { "tool": "Argent", "version": "0.31.1", "tools": 77, "toolsListBytes": 175392, "alwaysBytes": 192786, "onDemandBytes": 296534 },
+  "A3b3": { "tool": "Parallax", "version": "0.1.0-beta.3", "tools": 19, "toolsListBytes": 10071, "alwaysBytes": 10071, "onDemandBytes": 5041 },
+  "A3b4": { "tool": "Parallax", "version": "0.1.0-beta.4", "tools": 19, "toolsListBytes": 10079, "alwaysBytes": 10079, "onDemandBytes": 5419 },
+  "A3": { "tool": "Parallax", "version": "0.1.0-beta.2", "tools": 19, "toolsListBytes": 10075, "alwaysBytes": 10075, "onDemandBytes": 4936 }
+}

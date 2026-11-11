@@ -1,0 +1,33 @@
+{
+  "id": "B5",
+  "category": "persisted state",
+  "symptom": "The Checkout button is missing on the Cart screen.",
+  "cause": "AsyncStorage holds a stale 'flags' value from an earlier version ({\"newCheckout\": false}); useFlags merges it over the defaults and hides Checkout.",
+  "where": "src/flags.ts",
+  "cause_terms": [
+    "AsyncStorage|storage|stored|persisted",
+    "newCheckout.*false|false.*newCheckout|stale|old"
+  ],
+  "seed": {
+    "asyncStorage": {
+      "flags": "{\"newCheckout\":false}"
+    }
+  },
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "expectVisible": "cart/checkout"
+    }
+  ]
+}
