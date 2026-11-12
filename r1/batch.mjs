@@ -1,5 +1,5 @@
 // Benchmark R1 (plan 0023): runs a list of cells one after another and stops at the first that fails (a crash report, a broken setup).
-//   node bench/r1/batch.mjs --udid <udid> --model <model> --cells C1:A2,B3:A3:2,... [--n 1] [--budget-usd 5] [--minutes 15]
+//   node bench/r1/batch.mjs --udid <udid> --model <model> --cells C1:A2,B3:A3:2,... [--n 1] [--budget-usd 5] [--minutes 15] [--claude <bin>]
 // A cell is bug:arm or bug:arm:n (the run's number; --n is the default).
 // The order of --cells is the order of the runs: shuffle it when writing the list, so a drift does not land on one arm.
 import { spawnSync } from 'node:child_process';
@@ -18,7 +18,7 @@ if (!udid || !model || cells.length === 0) {
 for (const cell of cells) {
   const [bug, arm, n = arg('--n', '1')] = cell.split(':');
   console.log(`=== ${bug} ${arm} ${new Date().toISOString()}`);
-  const r = spawnSync(process.execPath, [join(here, 'run-cell.mjs'), '--udid', udid, '--bug', bug, '--arm', arm, '--model', model, '--n', n, '--budget-usd', arg('--budget-usd', '5'), '--minutes', arg('--minutes', '15')], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [join(here, 'run-cell.mjs'), '--udid', udid, '--bug', bug, '--arm', arm, '--model', model, '--n', n, '--budget-usd', arg('--budget-usd', '5'), '--minutes', arg('--minutes', '15'), '--claude', arg('--claude', 'claude')], { encoding: 'utf8' });
   const lines = `${r.stdout}${r.stderr}`.split('\n').filter(l => l && !l.startsWith('$ '));
   console.log(lines.slice(-3).join('\n'));
   if (r.status !== 0) {

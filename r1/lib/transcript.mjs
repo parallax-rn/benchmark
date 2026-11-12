@@ -3,6 +3,34 @@
 // content blocks, the final `result` event with usage and cost) are those `packages/mcp/scripts/permission-probe-claude.mjs` reads; the
 // usage fields are read defensively and a missing one is reported as null, never guessed. Codex's `exec --json` is not read yet.
 
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+// A run's whole conversation (subagents allowed since 2026-11-11): the main transcript without the partial subagent messages that headless
+// stream-json interleaves (they carry parent_tool_use_id), plus each subagent's own full transcript that the run kept in `subagents/`
+// (keepFromConfig in run-cell.mjs), as {t, line} records with `sidechain: true`, in time order.
+export function mergedTranscript(outDir) {
+  const main = readFileSync(join(outDir, 'transcript.jsonl'), 'utf8').split('\n').filter(raw => {
+    try {
+      return !JSON.parse(JSON.parse(raw).line).parent_tool_use_id;
+    } catch {
+      return raw.trim() !== '';
+    }
+  });
+  const subDir = join(outDir, 'subagents');
+  const side = existsSync(subDir) ? readdirSync(subDir).filter(f => f.endsWith('.jsonl')).flatMap(f => readFileSync(join(subDir, f), 'utf8').split('\n').filter(Boolean).flatMap(raw => {
+    try {
+      const e = JSON.parse(raw);
+      if (e.type !== 'assistant' && e.type !== 'user') return [];
+      return [JSON.stringify({ t: Date.parse(e.timestamp), line: JSON.stringify({ type: e.type, message: e.message, sidechain: true, agentId: e.agentId }) })];
+    } catch {
+      return [];
+    }
+  })) : [];
+  const tOf = raw => { try { return JSON.parse(raw).t ?? 0; } catch { return 0; } };
+  return [...main, ...side].sort((a, b) => tOf(a) - tOf(b)).join('\n');
+}
+
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 // A look at the device: any tool of a device MCP server, or a shell command that reads or drives the simulator.
 const DEVICE_BASH = /\b(simctl|axe|agent-device|argent|idb)\b/;
@@ -15,6 +43,8 @@ export function isDeviceLook(call) {
   if (call.name.startsWith('mcp__')) return true;
   return call.name === 'Bash' && DEVICE_BASH.test(String(call.input?.command ?? ''));
 }
+
+const sumOf = (byModel, k) => Object.values(byModel).reduce((a, m) => a + (typeof m?.[k] === 'number' ? m[k] : 0), 0);
 
 export function parseTranscript(text) {
   const calls = [];
@@ -57,7 +87,14 @@ export function parseTranscript(text) {
     turns: num(final?.num_turns),
     durationMs: num(final?.duration_ms) ?? (final?.t != null && first != null ? final.t - first : null),
     costUsd: num(final?.total_cost_usd),
-    tokens: {
+    // The run's tokens over every model it called, its subagents included: the result's `modelUsage` (in R1's runs, without subagents,
+    // it equals `usage` in all 97; with a subagent `usage` is the main conversation only, probe of 2026-11-11). `usage` when it is absent.
+    tokens: final?.modelUsage && Object.keys(final.modelUsage).length ? {
+      input: sumOf(final.modelUsage, 'inputTokens'),
+      output: sumOf(final.modelUsage, 'outputTokens'),
+      cacheCreate: sumOf(final.modelUsage, 'cacheCreationInputTokens'),
+      cacheRead: sumOf(final.modelUsage, 'cacheReadInputTokens'),
+    } : {
       input: num(usage.input_tokens),
       output: num(usage.output_tokens),
       cacheCreate: num(usage.cache_creation_input_tokens),

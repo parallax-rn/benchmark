@@ -132,3 +132,26 @@ export function checker(driver, { timeoutMs = 3000, pollMs = 250 } = {}) {
     },
   };
 }
+
+// The app on Home, from Metro on `port` (2026-11-11): when the debug build cannot reach the Metro it was told about at launch, React Native
+// falls back to localhost:8081, another project's Metro on this Mac, and shows "CompatB086 has not been registered" (AXe then fails on
+// the red box at once). So Metro's /status is awaited first, and a launch that did not reach Home is tried again, up to three times.
+export async function launchToHome(driver, seed, { port = 8096, attempts = 3, timeoutMs = 120000 } = {}) {
+  const statusOk = async () => {
+    try {
+      return (await (await fetch(`http://localhost:${port}/status`)).text()).includes('packager-status:running');
+    } catch {
+      return false;
+    }
+  };
+  for (const end = Date.now() + 30000; !(await statusOk()) && Date.now() < end; ) await sleep(500);
+  const log = [];
+  for (let i = 1; i <= attempts; i += 1) {
+    driver.relaunch(seed);
+    const r = await checker(driver, { timeoutMs, pollMs: 1000 }).run([{ expectVisible: 'home/products' }]);
+    log.push({ attempt: i, pass: r.pass, error: r.log.at(-1)?.error ?? null });
+    if (r.pass) return { pass: true, attempts: i, log };
+    await sleep(3000);
+  }
+  return { pass: false, attempts, log };
+}

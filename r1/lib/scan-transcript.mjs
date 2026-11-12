@@ -2,7 +2,7 @@
 // the two ways a run could cheat: reading the seeded bug out of git (the bug is a commit on a throwaway branch), or reading the maintainer's notes
 // (a path in the scratchpad or the note's name). A run with a flag does not count. `--sanitize <out>` also writes a copy without the home directory,
 // e-mail addresses and tokens, which is what goes into the report.
-//   node scripts/scan-transcript.mjs <transcript> [--sanitize <out>] [--note-name <fragment>]...
+//   node r1/lib/scan-transcript.mjs <transcript> [--sanitize <out>] [--note-name <fragment>]...
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -26,8 +26,13 @@ export function scan(text, { noteNames = [] } = {}) {
 export function sanitize(text, home = process.env.HOME ?? '') {
   let out = text;
   if (home) out = out.split(home).join('/Users/me');
+  // the user's name outside a path too (the owner column of `ls -l`, a prompt)
+  const user = home.split('/').filter(Boolean).at(-1);
+  if (user && user.length > 2) out = out.split(user).join('me');
   return out
     .replace(/\/Users\/[A-Za-z0-9._-]+/g, '/Users/me')
+    // Claude Code's project folder names spell the path with dashes (-Users-jane-Documents-app)
+    .replace(/-Users-[A-Za-z0-9._]+(?=-|\b)/g, '-Users-me')
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '<email>')
     .replace(/\b(?:sk|pk|ghp|gho|xox[bap])-?[A-Za-z0-9_-]{16,}\b/g, '<token>')
     .replace(/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, '<jwt>');

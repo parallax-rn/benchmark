@@ -1,0 +1,149 @@
+{
+  "method": "node r1/cold-start.mjs --udid <udid> --arm <arm> --samples 3. Per sample: the tool stopped, the simulator rebooted, the app on Home with Metro and the mock API; the clock starts, the tool's MCP server is started as its setup registered it, initialize, then the tool's first steps to tap Products on Home; the clock stops when the last step returns. The tap counts when the Products list is on screen afterwards (AXe, outside the clock). No agent, no model.",
+  "arms": {
+    "A1b": {
+      "setup": "agent-device 0.21.36",
+      "server": "agent-device mcp",
+      "measured": "2026-11-11T15:09:37Z",
+      "samples": [
+        {
+          "initializeMs": 61,
+          "firstTapMs": 10525,
+          "landed": true,
+          "steps": [
+            {
+              "name": "open",
+              "atMs": 1591,
+              "isError": false
+            },
+            {
+              "name": "press",
+              "atMs": 10525,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 65,
+          "firstTapMs": 9710,
+          "landed": true,
+          "steps": [
+            {
+              "name": "open",
+              "atMs": 1937,
+              "isError": false
+            },
+            {
+              "name": "press",
+              "atMs": 9710,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 58,
+          "firstTapMs": 9287,
+          "landed": true,
+          "steps": [
+            {
+              "name": "open",
+              "atMs": 1465,
+              "isError": false
+            },
+            {
+              "name": "press",
+              "atMs": 9287,
+              "isError": false
+            }
+          ]
+        }
+      ]
+    },
+    "A2b": {
+      "setup": "Argent 0.32.0",
+      "server": "argent mcp",
+      "measured": "2026-11-11T13:58:38Z",
+      "samples": [
+        {
+          "initializeMs": 1957,
+          "firstTapMs": 4739,
+          "landed": true,
+          "steps": [
+            {
+              "name": "gesture-tap",
+              "atMs": 4739,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 1886,
+          "firstTapMs": 4398,
+          "landed": true,
+          "steps": [
+            {
+              "name": "gesture-tap",
+              "atMs": 4397,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 1902,
+          "firstTapMs": 4611,
+          "landed": true,
+          "steps": [
+            {
+              "name": "gesture-tap",
+              "atMs": 4610,
+              "isError": false
+            }
+          ]
+        }
+      ]
+    },
+    "A3b11": {
+      "setup": "Parallax 0.1.0-beta.11",
+      "server": "npx -y --package=@parallax-rn/mcp@0.1.0-beta.11 parallax-mcp",
+      "measured": "2026-11-11T14:01:07Z",
+      "samples": [
+        {
+          "initializeMs": 887,
+          "firstTapMs": 2471,
+          "landed": true,
+          "steps": [
+            {
+              "name": "device_tap",
+              "atMs": 2471,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 515,
+          "firstTapMs": 2041,
+          "landed": true,
+          "steps": [
+            {
+              "name": "device_tap",
+              "atMs": 2041,
+              "isError": false
+            }
+          ]
+        },
+        {
+          "initializeMs": 509,
+          "firstTapMs": 2057,
+          "landed": true,
+          "steps": [
+            {
+              "name": "device_tap",
+              "atMs": 2057,
+              "isError": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

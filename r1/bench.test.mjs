@@ -1,6 +1,6 @@
 // Tests of the R1 harness (plan 0023) without a simulator or an agent: node --test bench/r1/bench.test.mjs bench/r1/mock-api.test.mjs
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -8,9 +8,12 @@ import { fileURLToPath } from 'node:url';
 import { checker } from './lib/drive.mjs';
 import { score } from './lib/score.mjs';
 import { parseTranscript } from './lib/transcript.mjs';
+import { BENCH_ROOT } from './bench.mjs';
 import { aggregate, table } from './report.mjs';
-import { agentEnv, allSeeds, isolationFlags, keyOf, projectInstructions, prompt } from './run-cell.mjs';
-import { contextOf, group } from './summary.mjs';
+import { agentEnv, agentInit, allSeeds, afterRun, ensureSimDeviceSet, freshConfig, isAgentDevice, keepFromConfig, isArgent, isolationFlags, keyOf, projectInstructions, prompt, simDeviceSet } from './run-cell.mjs';
+import { contextOf, group, setupName } from './summary.mjs';
+import { hideFullName, leaks } from './export-transcripts.mjs';
+import { mergedTranscript } from './lib/transcript.mjs';
 import { filesBytes, listTools } from './tools-surface.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -141,8 +144,12 @@ test('the tool surface: tools/list of a stdio server and the instruction files',
 
 test("the agent's isolation: a minimal environment, foreign plugins flagged, project rules passed in", () => {
   const env = agentEnv('/cfg', 'tok', { PATH: '/bin', HOME: '/real', CLAUDECODE: '1', ORCA_WORKTREE_ID: 'x', CLAUDE_CODE_ENTRYPOINT: 'cli', LANG: 'C' });
-  assert.deepEqual(Object.keys(env).filter(k => !['PATH', 'LANG'].includes(k)).sort(), ['CLAUDE_CODE_DISABLE_AUTO_MEMORY', 'CLAUDE_CODE_DISABLE_CLAUDE_MDS', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CONFIG_DIR', 'HOME', 'PARALLAX_METRO_URL', 'PARALLAX_RUN_DIR']);
+  assert.deepEqual(Object.keys(env).filter(k => !['PATH', 'LANG'].includes(k)).sort(), ['CLAUDE_CODE_DISABLE_CLAUDE_MDS', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CONFIG_DIR', 'DISABLE_AUTOUPDATER', 'HOME', 'PARALLAX_METRO_URL', 'PARALLAX_RUN_DIR']);
   assert.notEqual(env.HOME, '/real');
+  assert.equal(env.PATH, '/bin');
+  // an arm's own bin folder goes first (A1b: a newer agent-device next to the global one)
+  const own = agentEnv('/cfg', 'tok', { PATH: '/bin' }, { path: ['tools/x/node_modules/.bin'] });
+  assert.equal(own.PATH, `${join(BENCH_ROOT, 'tools/x/node_modules/.bin')}:/bin`);
   const init = p => JSON.stringify({ t: 1, line: JSON.stringify({ type: 'system', subtype: 'init', plugins: p }) });
   assert.deepEqual(isolationFlags(init([{ name: 'a', path: 'builtin' }])), []);
   assert.equal(isolationFlags(init([{ name: 'orca-agent-view', path: '/x', source: 'inline' }]))[0].kind, 'isolation');
@@ -171,7 +178,88 @@ test('navigate calls are counted from the transcript and a group counts the runs
     'not json',
   ].join('\n');
   assert.equal(contextOf(text).navigate, 2);
+  // a model call is one API request: the content blocks of one response (one message.id) are one call
+  const block = (id, input_tokens) => JSON.stringify({ line: JSON.stringify({ type: 'assistant', message: { id, usage: { input_tokens }, content: [] } }) });
+  assert.deepEqual(contextOf([block('m1', 10), block('m1', 10), block('m2', 30)].join('\n')), { calls: 2, firstContext: 10, lastContext: 30, navigate: 0 });
   assert.equal(contextOf(line([call('Read', {})])).navigate, 0);
   const run = navigate => ({ wallMs: 1000, transcript: { tokens: {}, costUsd: 0, byTool: {} }, context: { navigate } });
   assert.equal(group([run(2), run(0), run(1), { ...run(0), context: undefined }]).navigateRuns, 2);
+});
+
+test("agent-device's arms and the init line: the version and model the agent really ran", () => {
+  assert.ok(isAgentDevice('A1') && isAgentDevice('A1b') && !isAgentDevice('A3b11') && !isAgentDevice('A0'));
+  assert.ok(isArgent('A2') && isArgent('A2b') && !isArgent('A1b') && !isArgent('A3b11'));
+  assert.equal(simDeviceSet('/nonexistent-home'), null);
+  assert.deepEqual(afterRun('A2b'), ['argent server stop (the next run warm-starts it again)']);
+  assert.deepEqual(afterRun('A3b11'), []);
+  // the agent HOME's device set becomes a link to the user's; an empty folder is replaced, a full one is refused
+  const root = mkdtempSync(join(tmpdir(), 'simset-'));
+  const user = join(root, 'user'), agent = join(root, 'agent'), sets = 'Library/Developer/CoreSimulator/Devices';
+  mkdirSync(join(user, sets), { recursive: true });
+  mkdirSync(join(agent, sets), { recursive: true });
+  assert.equal(ensureSimDeviceSet(agent, user), realpathSync(join(user, sets)));
+  assert.equal(ensureSimDeviceSet(agent, user), realpathSync(join(user, sets)));
+  const full = join(root, 'full');
+  mkdirSync(join(full, sets, 'x'), { recursive: true });
+  assert.throws(() => ensureSimDeviceSet(full, user), /not replaced/);
+  rmSync(root, { recursive: true, force: true });
+  const init = JSON.stringify({ t: 1, line: JSON.stringify({ type: 'system', subtype: 'init', claude_code_version: '2.1.318', model: 'claude-sonnet-5-5' }) });
+  assert.deepEqual(agentInit(`junk\n${init}\n`), { claudeCodeVersion: '2.1.318', modelSeen: 'claude-sonnet-5-5' });
+  assert.deepEqual(agentInit(''), { claudeCodeVersion: null, modelSeen: null });
+});
+
+test('a run gets a fresh config, keeps its subagents and memory, and counts subagent requests as model calls', () => {
+  const root = mkdtempSync(join(tmpdir(), 'cfg-'));
+  const arm = join(root, 'arm'), run = join(root, 'run'), out = join(root, 'out');
+  mkdirSync(join(arm, 'projects', 'p', 'memory'), { recursive: true });
+  mkdirSync(join(arm, 'skills', 's'), { recursive: true });
+  writeFileSync(join(arm, 'projects', 'p', 'memory', 'old.md'), 'from an earlier run');
+  writeFileSync(join(arm, '.claude.json'), JSON.stringify({ mcpServers: { x: {} }, projects: { '/r': {} } }));
+  freshConfig(arm, run);
+  assert.ok(!existsSync(join(run, 'projects')) && existsSync(join(run, 'skills', 's')));
+  assert.deepEqual(JSON.parse(readFileSync(join(run, '.claude.json'), 'utf8')), { mcpServers: { x: {} } });
+  // what the run wrote: a subagent transcript and a memory file
+  mkdirSync(join(run, 'projects', 'p', 'sess', 'subagents'), { recursive: true });
+  mkdirSync(join(run, 'projects', 'p', 'memory'), { recursive: true });
+  writeFileSync(join(run, 'projects', 'p', 'memory', 'new.md'), 'x');
+  const sub = e => JSON.stringify({ type: 'assistant', timestamp: '2026-11-11T10:00:01.000Z', agentId: 'a1', message: { id: e, usage: { input_tokens: 99 }, content: [{ type: 'tool_use', name: 'Read', input: {} }] } });
+  writeFileSync(join(run, 'projects', 'p', 'sess', 'subagents', 'agent-a1.jsonl'), [sub('s1'), sub('s1'), sub('s2')].join('\n'));
+  mkdirSync(out);
+  assert.deepEqual(keepFromConfig(run, out), { subagents: ['agent-a1.jsonl'], memory: ['new.md'] });
+  const main = (id, t, extra = {}) => JSON.stringify({ t, line: JSON.stringify({ type: 'assistant', ...extra, message: { id, usage: { input_tokens: 10 }, content: [] } }) });
+  writeFileSync(join(out, 'transcript.jsonl'), [main('m1', Date.parse('2026-11-11T10:00:00Z')), main('s1', Date.parse('2026-11-11T10:00:01Z'), { parent_tool_use_id: 't' }), main('m2', Date.parse('2026-11-11T10:00:02Z'))].join('\n'));
+  const ctx = contextOf(mergedTranscript(out));
+  assert.equal(ctx.calls, 4); // m1, m2 and the subagent's s1, s2; s1 from stream-json is not counted twice
+  assert.equal(ctx.firstContext, 10);
+  assert.equal(ctx.lastContext, 10); // the subagent's context is not the run's
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('the account parallax skill is hidden from the non-Parallax rerun arms only (option c, 2026-11-11)', () => {
+  const { arms } = JSON.parse(readFileSync(join(here, 'arms.json'), 'utf8'));
+  for (const id of ['A0r', 'A1b', 'A2b']) {
+    assert.deepEqual(arms[id].settings, { skillOverrides: { parallax: 'off' } });
+    assert.ok(arms[id].disallowedTools.includes('Skill(parallax)')); // the deny rule stays
+  }
+  assert.equal(arms.A3b11.settings, undefined);
+});
+
+test('runs.csv names each setup with its version once', () => {
+  const surface = JSON.parse(readFileSync(join(here, 'surface.json'), 'utf8'));
+  assert.equal(setupName('A2b', surface), 'Argent 0.32.0');
+  assert.equal(setupName('A3b11', surface), 'Parallax 0.1.0-beta.11');
+  assert.equal(setupName('A3b3', surface), 'Parallax 0.1.0-beta.3');
+  assert.equal(setupName('A1b', surface), 'agent-device 0.21.36');
+  assert.equal(setupName('A0r', surface), 'Shell only');
+});
+
+test('export-transcripts hides the full name, any case, and leaks() catches what is left', () => {
+  const fullName = 'Ada Lovelace';
+  const text = 'curl -d \'{"name":"Ada Lovelace"}\' -> {"name":"ADA LOVELACE"}; signed lovelace, adapter';
+  const out = hideFullName(text, fullName);
+  assert.equal(out, 'curl -d \'{"name":"Jane Appleseed"}\' -> {"name":"Jane Appleseed"}; signed Appleseed, adapter');
+  assert.deepEqual(leaks(out, { fullName, user: 'adalovelace' }), []);
+  assert.deepEqual(leaks('by Lovelace', { fullName }), ['full name']);
+  assert.deepEqual(leaks('/Users/AdaLovelace', { user: 'adalovelace' }), ['user name']);
+  assert.equal(hideFullName(text, ''), text);
 });
