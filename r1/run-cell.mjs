@@ -326,7 +326,7 @@ async function main() {
     let inputFlagSetDuringRun = false;
     // agent-device leaves its daemon and an XCTest runner (xcodebuild) running after the agent exits; the next run starts clean.
     if (isAgentDevice(armId) && !dryRun) spawnSync('agent-device', ['daemon', 'stop', '--clean'], { env: { ...process.env, PATH: armPath(arm), HOME: AGENT_HOME }, encoding: 'utf8' });
-    // Argent's shared tool-server outlives the agent too, and while it ran AXe read an empty screen on this simulator (2026-11-04).
+    // Argent's shared tool-server outlives the agent; it is stopped so that the next run warm-starts it clean.
     if (isArgent(armId) && !dryRun) spawnSync('argent', ['server', 'stop'], { env: { ...process.env, PATH: armPath(arm), HOME: AGENT_HOME }, encoding: 'utf8' });
     // A Device Hub that appeared during the run was opened by the agent's tool (none ran before it, checked above).
     deviceHubOpened = deviceHubPids().length > 0;

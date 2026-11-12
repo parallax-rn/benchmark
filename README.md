@@ -15,12 +15,18 @@ medians per run. Every setup fixed every bug: a script checked each fix with rea
 price Claude Code reports, not a bill. Each tool was warmed up as its authors advise before the clock started (see *Method*). Cold start
 is measured separately, without an agent.
 
-| Setup | Fixed | Cause named (blind) | Time | Tokens | Cost | Model calls | Cold start, first tap (3 samples) |
-|---|---|---|---|---|---|---|---|
-| Shell only | 25/25 | 25 | 36 s | 202k | $0.07 | 8 | (no tool) |
-| Parallax 0.1.0-beta.11 | 25/25 | 25 | 39 s | 216k | $0.06 | 9 | 2.0 / 2.1 / 2.5 s |
-| agent-device 0.21.36 | 25/25 | 25 | 43 s | 240k | $0.10 | 8 | 9.3 / 9.7 / 10.5 s |
-| Argent 0.32.0 | 25/25 | 24 | 27 s | 339k | $0.09 | 7 | 4.4 / 4.6 / 4.7 s |
+Cache reads are 94 to 97% of every setup's tokens and cost far less than the other kinds, so compare setups by cost, not by tokens. Each
+column is its own median, so the token kinds do not add up to the total.
+
+Parallax was developed alongside these runs: it went from 0.1.0-beta.3 (the first R1) to 0.1.0-beta.11 (this rerun), and some of its
+changes came from bugs R1 found in it. R2 will use fresh bugs.
+
+| Setup | Fixed | Cause named (blind) | Cost | Time | Tokens | Cache read | Cache write | Output | Input | Model calls | Cold start, first tap (3 samples) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Shell only | 25/25 | 25 | $0.07 | 36 s | 202k | 190k | 10.0k | 1.7k | 16 | 8 | (no tool) |
+| Parallax 0.1.0-beta.11 | 25/25 | 25 | $0.06 | 39 s | 216k | 209k | 6.2k | 1.7k | 18 | 9 | 2.0 / 2.1 / 2.5 s |
+| agent-device 0.21.36 | 25/25 | 25 | $0.10 | 43 s | 240k | 222k | 15.3k | 1.7k | 16 | 8 | 9.3 / 9.7 / 10.5 s |
+| Argent 0.32.0 | 25/25 | 24 | $0.09 | 27 s | 339k | 331k | 8.5k | 1.5k | 14 | 7 | 4.4 / 4.6 / 4.7 s |
 
 Controls (B3 and C1, cause visible in the source, one run each per setup): every setup fixed both. agent-device 0.21.36 is the latest
 stable release; 0.21.37 exists only as nightly builds.
@@ -64,10 +70,11 @@ With five runs per bug, a median is a fair middle, not a precise figure. The dat
   start.
 - **Isolation and flags.** A run's transcript is scanned. A run that mentions the answer files, uses git, or loads anything from outside
   its setup is flagged and does not count. The Claude account we ran with has a skill named `parallax` that syncs into every setup's skill
-  list through the login. `Skill(parallax)` is denied outside the Parallax setup, and a call to it there is a flag. For the reruns of the 9
-  flagged runs, the skill was also hidden from the shell-only, agent-device and Argent setups with Claude Code's setting
+  list through the login. `Skill(parallax)` is denied outside the Parallax setup, and a call to it there is a flag. Only for the reruns of the 9
+  flagged runs was the skill also hidden from the shell-only, agent-device and Argent setups, with Claude Code's setting
   `skillOverrides: { "parallax": "off" }` (passed with `--settings`; `arms.json`). We checked it with `r1/skill-agent-check.mjs`: the skill
-  is gone from the agent's skill list, and a forced call fails.
+  is gone from the agent's skill list, and a forced call fails. In the other counted runs of those setups the skill was in the agent's
+  skill list but never called, so it did not change their figures.
 - **Every flagged run is run again until its cell counts.** In the rerun, 9 of 117 runs were flagged: 8 called `Skill(parallax)` (7
   shell-only, 1 agent-device; every call was denied, so the skill's text never reached the agent) and 1 Argent run used `git log` (denied
   too). Each of the 9 cells was run again and counted on the first try. The flagged runs stay in `runs-index.csv` and `transcripts/`.
