@@ -23,7 +23,21 @@ export function scan(text, { noteNames = [] } = {}) {
   return flags;
 }
 
+// an image block's base64 data, at any level of JSON escaping ("type":"image","source":{"type":"base64",["media_type":"…",]"data":"…)
+const IMAGE_DATA = /("type\\*":\\*"image\\*",\\*"source\\*":\{\\*"type\\*":\\*"base64\\*",(?:\\*"media_type\\*":\\*"[^"\\]*\\*",)?\\*"data\\*":\\*")([A-Za-z0-9+/=]+)/g;
+
+/** `fn` applied to the text outside image data only: a replacement must not change a screenshot's bytes. */
+export function outsideImages(text, fn) {
+  const kept = [];
+  const masked = text.replace(IMAGE_DATA, (_, head, data) => `${head}\u0000${kept.push(data) - 1}\u0000`);
+  return fn(masked).replace(/\u0000(\d+)\u0000/g, (_, i) => kept[Number(i)]);
+}
+
 export function sanitize(text, home = process.env.HOME ?? '') {
+  return outsideImages(text, t => sanitizeText(t, home));
+}
+
+function sanitizeText(text, home) {
   let out = text;
   if (home) out = out.split(home).join('/Users/me');
   // the user's name outside a path too (the owner column of `ls -l`, a prompt)

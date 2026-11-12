@@ -9,16 +9,19 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { basename, join } from 'node:path';
 import { userInfo } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { sanitize } from './lib/scan-transcript.mjs';
+import { outsideImages, sanitize } from './lib/scan-transcript.mjs';
 import { BENCH_ROOT } from './bench.mjs';
 
 const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** The full name and each of its words (longer than 2 letters), any case: the words as whole words only. */
 const nameWords = fullName => (fullName ? fullName.split(/\s+/).filter(w => w.length > 2) : []);
 
-/** The macOS user's full name replaced with a neutral one, any case. */
+/** The macOS user's full name replaced with a neutral one, any case, outside image data. */
 export function hideFullName(text, fullName) {
-  if (!fullName) return text;
+  return fullName ? outsideImages(text, t => hideIn(t, fullName)) : text;
+}
+
+function hideIn(text, fullName) {
   let out = text.replace(new RegExp(escape(fullName), 'gi'), 'Jane Appleseed');
   const [first, ...rest] = nameWords(fullName);
   if (first) out = out.replace(new RegExp(`\\b${escape(first)}\\b`, 'gi'), 'Jane');
