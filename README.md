@@ -86,7 +86,15 @@ With five runs per bug, a median is a fair middle, not a precise figure. The dat
   - Parallax and the shell: nothing.
 
   Then the app is launched to Home and the clock starts. After the agent, agent-device's daemon is stopped (`daemon stop --clean`) and the
-  simulator rebooted before the check; Argent's server is stopped (`argent server stop`).
+  simulator rebooted before the check; Argent's server is stopped (`argent server stop`). The warm step's time is outside the clock; its
+  per-run times are in [`r1/results/warm-start.csv`](r1/results/warm-start.csv):
+
+  | Setup | Warm step time, median (range) | Warm steps ok | Cold start, first tap (3 samples) |
+  |---|---|---|---|
+  | Parallax 0.1.0-beta.11 | none needed | – | 2.1 / 2.1 / 2.0 s |
+  | Argent 0.33.0 | 2.4 s (2.1 to 3.4 s) | 27/27 | 4.1 / 4.4 / 4.4 s |
+  | agent-device 0.21.37 | 10.5 s (8.9 to 12.8 s) | 27/27 | 7.5 / 8.2 / 7.1 s |
+  | Shell only | none needed | – | (no tool) |
 - **Cold start**, measured apart (`r1/cold-start.mjs`), three samples per tool, no agent and no model. Each sample: the simulator
   rebooted, the app on Home with Metro and the mock API, the tool stopped (agent-device: `daemon stop --clean`; Argent:
   `argent server stop`). The clock starts, the tool's MCP server is started as its setup registered it, and the tool is asked for its
