@@ -199,20 +199,21 @@ export function keepFromConfig(configDir, outDir) {
 
 // Warm start (maintainer, 2026-11-11, at Argent's and agent-device's request): after the reboot and before the app starts, each tool's own
 // long-lived process is started, then the app, then the timer. Argent: its tool-server (`argent server start`; before the app, since Argent
-// injects into the simulator's launchd). agent-device: its iOS runner (`doctor`, then `prepare ios-runner`; see warmPlan).
+// injects into the simulator's launchd), then one `argent run screenshot` (Argent's maintainers, 2026-11-12: the per-simulator simulator-server starts
+// on the first device action, about 1 to 2 s, which fell inside the clock; the PNG goes to the run's results folder, never the project). agent-device: its iOS runner (`doctor`, then `prepare ios-runner`; see warmPlan).
 // Parallax: nothing (its npm server has no process of its own: the core runs inside the MCP server Claude Code starts). The shell: nothing.
-export const warmPlan = armId => isArgent(armId) ? [['argent', ['server', 'start', '--detach', '--force']], ['argent', ['server', 'status', '--json'], /"running": true/]]
+export const warmPlan = (armId, udid = '<udid>', outDir = '<results>') => isArgent(armId) ? [['argent', ['server', 'start', '--detach', '--force']], ['argent', ['server', 'status', '--json'], /"running": true/], ['argent', ['run', 'screenshot', '--udid', udid, '--out', join(outDir, 'warm-screenshot.png')]]]
   // agent-device (its maintainers' advice, 2026-11-11): its daemon is cheap, the iOS XCTest runner is the real start-up cost, so warm means the runner
   // built, started and health-checked: `doctor --platform ios`, then `prepare ios-runner`, with the same local binary as the run.
   : isAgentDevice(armId) ? [['agent-device', ['doctor', '--platform', 'ios']], ['agent-device', ['prepare', 'ios-runner', '--platform', 'ios', '--timeout', '240000', '--json']], ['agent-device', ['daemon', 'status', '--json'], /"state": "running"/]] : [];
-export function warmStart(armId, arm, udid) {
+export function warmStart(armId, arm, udid, outDir) {
   const t = Date.now();
-  const steps = warmPlan(armId).map(([cmd, args, expect]) => {
-    const r = spawnSync(cmd, args, { env: { ...process.env, PATH: armPath(arm), HOME: AGENT_HOME }, encoding: 'utf8', timeout: 300000 });
+  const steps = warmPlan(armId, udid, outDir).map(([cmd, args, expect]) => {
+    const r = spawnSync(cmd, args, { cwd: outDir, env: { ...process.env, PATH: armPath(arm), HOME: AGENT_HOME }, encoding: 'utf8', timeout: 300000 });
     // the binary that ran, so the warm step and the run are provably the same version
     const bin = spawnSync('/bin/sh', ['-c', `command -v ${cmd}`], { env: { ...process.env, PATH: armPath(arm) }, encoding: 'utf8' }).stdout.trim();
     const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim();
-    return { cmd: [cmd, ...args].join(' '), bin, exit: r.status, ok: r.status === 0 && (!expect || expect.test(out)), out: out.slice(0, 2000) };
+    return { cmd: [cmd, ...args].join(' '), bin, exit: r.status, ok: r.status === 0 && (!expect || expect.test(out)) && (!args.includes('--out') || existsSync(args[args.indexOf('--out') + 1])), out: out.slice(0, 2000) };
   });
   // what the tool put into the simulator's launchd environment by then (Argent injects there)
   return { ms: Date.now() - t, ok: steps.every(st => st.ok), steps, launchdEnv: udid ? injectedEnv(udid) : null };
@@ -252,7 +253,7 @@ function planOnly(o, arm, base, key) {
   plan.simDeviceSet = simDeviceSet();
   plan.simDeviceSetIsUsers = plan.simDeviceSet === simDeviceSet(process.env.HOME);
   plan.afterRun = afterRun(o.armId);
-  plan.warmStart = warmPlan(o.armId).map(([c, a]) => [c, ...a].join(' '));
+  plan.warmStart = warmPlan(o.armId, o.udid).map(([c, a]) => [c, ...a].join(' '));
   plan.freshConfigPerRun = 'a copy of ' + configDir + ' without ' + CONFIG_HISTORY.join(', ');
   plan.autoMemory = !('CLAUDE_CODE_DISABLE_AUTO_MEMORY' in env);
   console.log(JSON.stringify(plan, null, 2));
@@ -305,7 +306,7 @@ async function main() {
   const seed = allSeeds();
   let result;
   try {
-    const warm = dryRun ? null : warmStart(armId, arm, udid);
+    const warm = dryRun ? null : warmStart(armId, arm, udid, outDir);
     if (warm && !warm.ok) throw new Error(`warm start of ${armId} failed: ${JSON.stringify(warm.steps)}`);
     // The first bundle after --reset-cache takes Metro a while to build; a launch that fell back to another Metro is tried again.
     const ready = await launchToHome(driver, seed);

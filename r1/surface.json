@@ -9,5 +9,9 @@
   "A3": { "tool": "Parallax", "version": "0.1.0-beta.2", "tools": 19, "toolsListBytes": 10075, "alwaysBytes": 10075, "onDemandBytes": 4936 },
   "A0r": { "tool": "none", "version": null, "tools": 0, "toolsListBytes": 0, "alwaysBytes": 0, "onDemandBytes": 0 },
   "A1b": { "tool": "agent-device", "version": "0.21.36", "tools": 62, "toolsListBytes": 263667, "alwaysBytes": 263667, "onDemandBytes": 7503 },
-  "A2b": { "tool": "Argent", "version": "0.32.0", "tools": 77, "toolsListBytes": 179738, "alwaysBytes": 197132, "onDemandBytes": 296566 }
+  "A2b": { "tool": "Argent", "version": "0.32.0", "tools": 77, "toolsListBytes": 179738, "alwaysBytes": 197132, "onDemandBytes": 296566 },
+  "A2c": { "tool": "Argent", "version": "0.33.0", "tools": 71, "toolsListBytes": 150864, "alwaysBytes": 153384, "onDemandBytes": 179718 },
+  "A1c": { "tool": "agent-device", "version": "0.21.37", "tools": 62, "toolsListBytes": 142052, "alwaysBytes": 142052, "onDemandBytes": 7503 },
+  "A3c": { "tool": "Parallax", "version": "0.1.0-beta.11", "tools": 19, "toolsListBytes": 10079, "alwaysBytes": 10079, "onDemandBytes": 5420 },
+  "A0c": { "tool": "none", "version": null, "tools": 0, "toolsListBytes": 0, "alwaysBytes": 0, "onDemandBytes": 0 }
 }

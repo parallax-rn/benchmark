@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { mergedTranscript } from './lib/transcript.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
-export const ARM_NAMES = { A0: 'Shell only', A0r: 'Shell only', A1: 'agent-device', A2: 'Argent', A3: 'Parallax', A3b3: 'Parallax beta.3', A3b4: 'Parallax beta.4', A3b11: 'Parallax beta.11', A1b: 'agent-device', A2b: 'Argent 0.32.0', A3d: 'Parallax (dev)', A3n: 'Parallax (dev, navigate)', A3n2: 'Parallax (dev, navigate + instructions)' };
+export const ARM_NAMES = { A0: 'Shell only', A0r: 'Shell only', A1: 'agent-device', A2: 'Argent', A3: 'Parallax', A3b3: 'Parallax beta.3', A3b4: 'Parallax beta.4', A3b11: 'Parallax beta.11', A1b: 'agent-device', A2b: 'Argent 0.32.0', A2c: 'Argent 0.33.0', A1c: 'agent-device 0.21.37', A3c: 'Parallax beta.11', A0c: 'Shell only', A3d: 'Parallax (dev)', A3n: 'Parallax (dev, navigate)', A3n2: 'Parallax (dev, navigate + instructions)' };
 
 const median = xs => {
   const v = xs.filter(x => typeof x === 'number').sort((a, b) => a - b);
@@ -99,13 +99,13 @@ export function summarize(results, keys, surface) {
 
 const f = (v, d = 0) => (v === null || v === undefined ? '-' : Number(v).toFixed(d));
 export function markdown(s) {
-  const head = '| Arm | Runs | Fixed | Cause named | Checked on device | Confident wrong | Median time (s) | Median cost ($) | Cost per fix ($) | Median tokens (input / output / cache write / cache read) | Median device calls | Model calls | Context first → last |';
-  const sep = '|---|---|---|---|---|---|---|---|---|---|---|---|---|';
-  const row = (a, g) => `| ${s.arms[a].name} | ${g.runs} | ${g.fixed} | ${g.causeNamed} | ${g.checkedAfterEdit} | ${g.confidentWrong} | ${f(g.medianSeconds)} | ${f(g.medianCostUsd, 2)} | ${f(g.costPerFixUsd, 2)} | ${f(g.medianTokens / 1000)}k (${f(g.medianInputTokens)} / ${f(g.medianOutputTokens / 1000, 1)}k / ${f(g.medianCacheWriteTokens / 1000)}k / ${f(g.medianCacheReadTokens / 1000)}k) | ${f(g.medianDeviceCalls)} | ${f(g.medianModelCalls)} | ${f(g.medianFirstContext / 1000)}k → ${f(g.medianLastContext / 1000)}k |`;
+  const head = '| Arm | Runs | Fixed | Median cost ($) | Cost per fix ($) | Median tokens | Cache read | Cache write | Output | Input | Cause named | Checked on device | Confident wrong | Median time (s) | Median device calls | Model calls | Context first → last |';
+  const sep = '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|';
+  const row = (a, g) => `| ${s.arms[a].name} | ${g.runs} | ${g.fixed} | ${f(g.medianCostUsd, 2)} | ${f(g.costPerFixUsd, 2)} | ${f(g.medianTokens / 1000)}k | ${f(g.medianCacheReadTokens / 1000)}k | ${f(g.medianCacheWriteTokens / 1000, 1)}k | ${f(g.medianOutputTokens / 1000, 1)}k | ${f(g.medianInputTokens)} | ${g.causeNamed} | ${g.checkedAfterEdit} | ${g.confidentWrong} | ${f(g.medianSeconds)} | ${f(g.medianDeviceCalls)} | ${f(g.medianModelCalls)} | ${f(g.medianFirstContext / 1000)}k → ${f(g.medianLastContext / 1000)}k |`;
   const table = groups => [head, sep, ...Object.entries(groups).filter(([, g]) => g.runs).map(([a, g]) => row(a, g))].join('\n');
   const surface = ['| Arm | Tools | tools/list + always-on rules (KB) | ≈ tokens | Skills on demand (KB) |', '|---|---|---|---|---|', ...Object.entries(s.arms).map(([, a]) => `| ${a.name} | ${a.tools ?? '-'} | ${f(a.alwaysBytes / 1024)} | ${f(a.alwaysBytes / 4 / 1000, 1)}k | ${f(a.onDemandBytes / 1024)} |`)].join('\n');
   const perBug = Object.entries(s.perBug).map(([b, v]) => `### ${b} (${v.category}${v.control ? ', control' : ''})\n\n"${v.symptom}"\n\n${table(v.arms)}`).join('\n\n');
-  return [`Runs counted: ${s.runs}. Model: ${s.models.join(', ')}. Cost is the API list price the agent reports, not a bill.`, s.leftOut.length ? `Left out (a flag in the transcript): ${s.leftOut.join(', ')}.` : '', '## Tool surface', surface, '## Runtime bugs', table(s.runtime), '## Source-visible controls', table(s.controls), '## Per bug', perBug].filter(Boolean).join('\n\n');
+  return [`Runs counted: ${s.runs}. Model: ${s.models.join(', ')}. Cost is the API list price the agent reports, not a bill; compare setups by cost: cache reads are most of the tokens and cost far less than the other kinds. Each token column is its own median, so the kinds do not add up to the total.`, s.leftOut.length ? `Left out (a flag in the transcript): ${s.leftOut.join(', ')}.` : '', '## Tool surface', surface, '## Runtime bugs', table(s.runtime), '## Source-visible controls', table(s.controls), '## Per bug', perBug].filter(Boolean).join('\n\n');
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

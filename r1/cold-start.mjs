@@ -27,9 +27,10 @@ export function serverOf(armId) {
   return { name, command: s.command, args: s.args ?? [], env };
 }
 
-/** Each tool's first steps to tap Products on Home, as its own docs and the R1 transcripts do them (screen 402x874 points). */
+/** Each tool's first steps to tap Products on Home, as its own docs and the R1 transcripts do them (screen 402x874 points). agent-device 0.21.37
+ * removed press's `target` object: the selector goes at the top level (its INVALID_ARGS message, 2026-11-13). */
 export const firstSteps = (armId, udid) =>
-  isAgentDevice(armId) ? [['open', { app: BUNDLE_ID, udid, platform: 'ios' }], ['press', { target: { kind: 'selector', selector: 'id=home/products' }, udid, platform: 'ios' }]]
+  isAgentDevice(armId) ? [['open', { app: BUNDLE_ID, udid, platform: 'ios' }], ['press', { ...(/^A1b?$/.test(armId) ? { target: { kind: 'selector', selector: 'id=home/products' } } : { selector: 'id=home/products' }), udid, platform: 'ios' }]]
   : isArgent(armId) ? [['gesture-tap', { udid, x: 201 / 402, y: 160 / 874 }]]
   : [['device_tap', { id: 'home/products' }]];
 

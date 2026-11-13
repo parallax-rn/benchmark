@@ -10,7 +10,7 @@ import { score } from './lib/score.mjs';
 import { parseTranscript } from './lib/transcript.mjs';
 import { BENCH_ROOT } from './bench.mjs';
 import { aggregate, table } from './report.mjs';
-import { agentEnv, agentInit, allSeeds, afterRun, ensureSimDeviceSet, freshConfig, isAgentDevice, keepFromConfig, isArgent, isolationFlags, keyOf, projectInstructions, prompt, simDeviceSet } from './run-cell.mjs';
+import { agentEnv, agentInit, allSeeds, afterRun, ensureSimDeviceSet, freshConfig, isAgentDevice, keepFromConfig, isArgent, isolationFlags, keyOf, projectInstructions, prompt, simDeviceSet, warmPlan } from './run-cell.mjs';
 import { contextOf, group, setupName } from './summary.mjs';
 import { hideFullName, leaks } from './export-transcripts.mjs';
 import { mergedTranscript } from './lib/transcript.mjs';
@@ -192,6 +192,10 @@ test("agent-device's arms and the init line: the version and model the agent rea
   assert.equal(simDeviceSet('/nonexistent-home'), null);
   assert.deepEqual(afterRun('A2b'), ['argent server stop (the next run warm-starts it again)']);
   assert.deepEqual(afterRun('A3b11'), []);
+  // Argent's warm start ends with one screenshot (the simulator-server starts outside the clock), written to the results folder
+  const shot = warmPlan('A2c', 'U1', '/r/out').at(-1);
+  assert.deepEqual(shot, ['argent', ['run', 'screenshot', '--udid', 'U1', '--out', '/r/out/warm-screenshot.png']]);
+  assert.deepEqual(warmPlan('A3b11'), []);
   // the agent HOME's device set becomes a link to the user's; an empty folder is replaced, a full one is refused
   const root = mkdtempSync(join(tmpdir(), 'simset-'));
   const user = join(root, 'user'), agent = join(root, 'agent'), sets = 'Library/Developer/CoreSimulator/Devices';
@@ -237,11 +241,12 @@ test('a run gets a fresh config, keeps its subagents and memory, and counts suba
 
 test('the account parallax skill is hidden from the non-Parallax rerun arms only (option c, 2026-11-11)', () => {
   const { arms } = JSON.parse(readFileSync(join(here, 'arms.json'), 'utf8'));
-  for (const id of ['A0r', 'A1b', 'A2b']) {
+  for (const id of ['A0r', 'A1b', 'A2b', 'A2c', 'A1c', 'A0c']) {
     assert.deepEqual(arms[id].settings, { skillOverrides: { parallax: 'off' } });
     assert.ok(arms[id].disallowedTools.includes('Skill(parallax)')); // the deny rule stays
   }
   assert.equal(arms.A3b11.settings, undefined);
+  assert.equal(arms.A3c.settings, undefined);
 });
 
 test('runs.csv names each setup with its version once', () => {

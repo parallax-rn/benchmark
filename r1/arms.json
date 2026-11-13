@@ -17,6 +17,10 @@
     "A1b": { "name": "agent-device (the version in its path: 0.21.37 once published, else 0.21.36)", "allowedTools": ["mcp__agent-device__*"], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } }, "path": ["tools/agent-device-0.21.36/node_modules/.bin"] },
     "A3b11": { "name": "Parallax 0.1.0-beta.11", "allowedTools": ["mcp__parallax__*"] },
     "A0r": { "name": "no device tool (rerun on the fixed harness)", "allowedTools": [], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } } },
-    "A2b": { "name": "Argent 0.32.0", "allowedTools": ["mcp__argent__*"], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } }, "path": ["tools/argent-0.32.0/node_modules/.bin"] }
+    "A2b": { "name": "Argent 0.32.0", "allowedTools": ["mcp__argent__*"], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } }, "path": ["tools/argent-0.32.0/node_modules/.bin"] },
+    "A2c": { "name": "Argent 0.33.0", "allowedTools": ["mcp__argent__*"], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } }, "path": ["tools/argent-0.33.0/node_modules/.bin"] },
+    "A1c": { "name": "agent-device 0.21.37", "allowedTools": ["mcp__agent-device__*"], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } }, "path": ["tools/agent-device-0.21.37/node_modules/.bin"] },
+    "A3c": { "name": "Parallax 0.1.0-beta.11 (cut-off rerun 2026-11-13)", "allowedTools": ["mcp__parallax__*"] },
+    "A0c": { "name": "no device tool (cut-off rerun 2026-11-13)", "allowedTools": [], "disallowedTools": ["Skill(parallax)"], "settings": { "skillOverrides": { "parallax": "off" } } }
   }
 }
