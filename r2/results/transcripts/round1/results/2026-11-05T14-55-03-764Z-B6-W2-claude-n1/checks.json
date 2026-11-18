@@ -1,0 +1,34 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Product",
+          "params": {
+            "id": "p1"
+          }
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectTextMatches": {
+            "product/restocked": "Restocked \\d+ days? ago"
+          }
+        },
+        "ok": true,
+        "got": [
+          {
+            "id": "product/restocked",
+            "want": "Restocked \\d+ days? ago",
+            "ok": true,
+            "got": "Restocked 2 days ago"
+          }
+        ]
+      }
+    ]
+  }
+]

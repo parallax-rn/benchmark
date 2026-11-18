@@ -1,0 +1,5 @@
+{"t":1793890837666,"card":"Wants to tap (70, 99)","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793890843722,"card":"Wants to tap (336, 464)","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793890847960,"card":"Wants to tap “product/add”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793890850170,"card":"Wants to tap “product/add”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793890853891,"card":"Wants to run the app command “navigate”","tool":"mcp__parallax__app_command_run","allow":true}

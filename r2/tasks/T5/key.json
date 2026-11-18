@@ -1,0 +1,50 @@
+{
+  "id": "T5",
+  "category": "the human's state (approvals)",
+  "windowGives": "approvals in the window; the state the human built",
+  "contrast": "W2 and W1 vs W0 (the policy is the same in W1 and W2)",
+  "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+  "cause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+  "where": "src/cartActions.ts cartKey",
+  "cause_terms": [
+    "cache|cartKey|key|memo|totals",
+    "qty|quantit|count|same key"
+  ],
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Product",
+      "params": {
+        "id": "p2"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "tap": "cart/dec/p1"
+    },
+    {
+      "tap": "cart/inc/p2"
+    },
+    {
+      "expectText": {
+        "cart/total": "Total: $65.48"
+      }
+    }
+  ]
+}

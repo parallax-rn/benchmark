@@ -1,0 +1,55 @@
+{
+  "_comment": "Plan 0027. The human's part, the same in W1 (AXe and a screenshot) and W2 (the window's drive file). `words` is the blind describer's text, frozen verbatim (noise included); W0's ticket is the same words.",
+  "words": "I added the Desk lamp to the cart, typed SAVE10 in the coupon box and pressed Apply. Nothing changed: the total still says $39.50, and I see no message saying the code worked or didn't.",
+  "setup": [
+    {
+      "api": "rearm"
+    },
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "tap": "cart/coupon"
+    },
+    {
+      "type": "SAVE10"
+    },
+    {
+      "tap": "cart/apply"
+    },
+    {
+      "wait": 1500
+    }
+  ],
+  "pick": null,
+  "attach": {
+    "network": {
+      "path": "/coupon",
+      "status": 500
+    }
+  },
+  "approvals": {
+    "deny": [],
+    "otherwise": "allow"
+  },
+  "followUp": {
+    "words": "Still wrong.",
+    "repeatPick": true
+  },
+  "describer": {
+    "frozen": "2026-11-05",
+    "model": "claude-sonnet-5-5 (subagent, one case per call, the symptom screenshot from the R2.1 matrix and nothing else)",
+    "screenshot": "~/ParallaxBench/r2/results/2026-11-05T08-40-12-384Z-matrix/T2-symptom.png",
+    "did": "You added Desk lamp to the cart, opened the cart, typed SAVE10 into the coupon field and pressed Apply.",
+    "knows": null
+  }
+}

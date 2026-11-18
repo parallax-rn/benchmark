@@ -1,0 +1,48 @@
+{
+  "_comment": "Plan 0027, the pre-registered thresholds of benchmark R2, frozen before the first counted run and published before it (decision 7). Medians over 3 runs per cell; a direction, not statistics. Task keys, bug files and the human's words stay private until the results.",
+  "frozen": "2026-11-05",
+  "model": "claude-sonnet-5-5",
+  "agent": "Claude Code, headless, stream-json; model claude-sonnet-5-5",
+  "parallax": {
+    "mcp": "@parallax-rn/mcp@0.1.0-beta.5 (npm)",
+    "window": "Parallax 0.1.0-beta.5 (packaged release, Parallax-0.1.0-beta.5-arm64.zip, sha256 19de8144a4853ba1f8d5f5db05657e8670e6efdc3da3d0d5de4fac5557fe4102)"
+  },
+  "device": "iOS simulator, iPhone 17 Pro, iOS 26.3",
+  "arms": {
+    "W0": "a written ticket, no human; the agent reproduces it itself",
+    "W1": "a human at a plain Simulator: the same words and a screenshot, the app left in the bug state",
+    "W2": "a human with the Parallax window: the same words sent from the window with a picked element or an attached network request, approvals on the window's cards"
+  },
+  "runsPerCell": 3,
+  "controlRunsPerArm": 1,
+  "windowTasks": [
+    "T1",
+    "T2",
+    "T4",
+    "T5"
+  ],
+  "humanTasks": [
+    "T3"
+  ],
+  "controls": [
+    "C1",
+    "B6",
+    "B5"
+  ],
+  "H1": {
+    "statement": "On the window tasks W2 beats W1 on at least one of: tasks fixed, wrong-file first edits, confident wrong answers, median agent cost; and W2 costs the human no more actions than W1.",
+    "falsifiedIf": {
+      "all": [
+        "fixed(W2) == fixed(W1) over the window tasks",
+        "wrongFirstEdits(W2) >= wrongFirstEdits(W1) and confidentWrong(W2) >= confidentWrong(W1)",
+        "medianCost(W2) > 0.85 * medianCost(W1)"
+      ]
+    },
+    "alsoFailedIf": "humanActions(W2) > humanActions(W1), or attended minutes in the hand runs higher for W2"
+  },
+  "H2": {
+    "statement": "On the controls W0, W1 and W2 are equal within the spread of their three runs.",
+    "falsifiedIf": "a control's median cost or time in W2 is above the highest of the three W1 runs, or W2 fixes fewer controls than W1"
+  },
+  "reported": "every task on its own as well as pooled; T3 separates W0 from W1 and W2, never W2 from W1"
+}

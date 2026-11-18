@@ -1,0 +1,79 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Product",
+          "params": {
+            "id": "p1"
+          }
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "product/add"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "product/add"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "open": "Product",
+          "params": {
+            "id": "p2"
+          }
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "product/add"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "open": "Cart"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "cart/dec/p1"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "cart/inc/p2"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectText": {
+            "cart/total": "Total: $65.48"
+          }
+        },
+        "ok": true,
+        "got": [
+          {
+            "id": "cart/total",
+            "want": "Total: $65.48",
+            "ok": true,
+            "got": "Total: $65.48"
+          }
+        ]
+      }
+    ]
+  }
+]

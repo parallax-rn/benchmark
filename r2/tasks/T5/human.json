@@ -1,0 +1,59 @@
+{
+  "_comment": "Plan 0027. The human's part, the same in W1 (AXe and a screenshot) and W2 (the window's drive file). `words` is the blind describer's text, frozen verbatim (noise included); W0's ticket is the same words.",
+  "words": "In the cart, Desk lamp now shows x1 and Lantern x2, but the total says $91.99, which doesn't match: 39.50 + 2 × 12.99 is only $65.48. The total looks wrong after I pressed − on Desk lamp and + on Lantern.",
+  "setup": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Product",
+      "params": {
+        "id": "p2"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "tap": "cart/dec/p1"
+    },
+    {
+      "tap": "cart/inc/p2"
+    }
+  ],
+  "pick": {
+    "id": "cart/total"
+  },
+  "attach": null,
+  "approvals": {
+    "deny": [
+      "mcp__parallax__app_reload",
+      "mcp__parallax__app_launch",
+      "mcp__parallax__device_boot"
+    ],
+    "otherwise": "allow"
+  },
+  "followUp": {
+    "words": "Still wrong.",
+    "repeatPick": true
+  },
+  "describer": {
+    "frozen": "2026-11-05",
+    "model": "claude-sonnet-5-5 (subagent, one case per call, the symptom screenshot from the R2.1 matrix and nothing else)",
+    "screenshot": "~/ParallaxBench/r2/results/2026-11-05T08-40-12-384Z-matrix/T5-symptom.png",
+    "did": "You added Desk lamp twice and Lantern once, opened the cart, pressed − next to Desk lamp and + next to Lantern.",
+    "knows": null
+  }
+}

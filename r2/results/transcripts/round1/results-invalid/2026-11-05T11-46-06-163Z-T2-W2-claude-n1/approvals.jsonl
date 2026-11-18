@@ -1,0 +1,7 @@
+{"t":1793879244935,"card":"Wants to reload the app","tool":"mcp__parallax__app_reload","allow":true}
+{"t":1793879258310,"card":"Wants to tap “popular/p1”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793879266455,"card":"Wants to tap “product/add”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793879272897,"card":"Wants to run the app command “navigate”","tool":"mcp__parallax__app_command_run","allow":true}
+{"t":1793879275817,"card":"Wants to tap “cart/coupon”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793879281051,"card":"Wants to type text","tool":"mcp__parallax__device_type","allow":true}
+{"t":1793879284572,"card":"Wants to tap “cart/apply”","tool":"mcp__parallax__device_tap","allow":true}

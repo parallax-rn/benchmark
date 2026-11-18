@@ -1,0 +1,42 @@
+{
+  "id": "T4",
+  "category": "an element with no text (pick and Inspector)",
+  "windowGives": "pick and the Inspector's props",
+  "contrast": "W2 vs W1",
+  "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+  "cause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+  "where": "src/marks.ts OFFERS",
+  "cause_terms": [
+    "markColor|marks|OFFERS|OFFER_COLORS|RowMark",
+    "case|capital|lower|toLowerCase|spelling"
+  ],
+  "check": [
+    {
+      "open": "Products"
+    },
+    {
+      "expectVisible": "row/p3"
+    },
+    {
+      "expectPixel": {
+        "near": "row/p3",
+        "dx": 22,
+        "color": "#f0883e"
+      }
+    },
+    {
+      "expectPixel": {
+        "near": "row/p1",
+        "dx": 22,
+        "color": "#d1242f"
+      }
+    },
+    {
+      "expectPixel": {
+        "near": "row/p4",
+        "dx": 22,
+        "color": "#2da44e"
+      }
+    }
+  ]
+}

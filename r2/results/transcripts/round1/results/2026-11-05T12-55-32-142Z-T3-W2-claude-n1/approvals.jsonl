@@ -1,0 +1,4 @@
+{"t":1793883389028,"card":"Wants to reload the app","tool":"mcp__parallax__app_reload","allow":true}
+{"t":1793883398921,"card":"Wants to run the app command “navigate”","tool":"mcp__parallax__app_command_run","allow":true}
+{"t":1793883400031,"card":"Wants to tap “search/input”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793883404170,"card":"Wants to type text","tool":"mcp__parallax__device_type","allow":true}

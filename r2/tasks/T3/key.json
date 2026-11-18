@@ -1,0 +1,34 @@
+{
+  "id": "T3",
+  "category": "a state made at a human's pace",
+  "windowGives": "nothing the agent lacks: the human's state on the screen (W1 has it too)",
+  "contrast": "W1 and W2 vs W0",
+  "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+  "cause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+  "where": "src/screens/Search.tsx the search effect",
+  "cause_terms": [
+    "race|order|stale|out of order|arrives? last|later",
+    "cancel|ignore|guard|cleanup|abort|current"
+  ],
+  "check": [
+    {
+      "open": "Search"
+    },
+    {
+      "tap": "search/input"
+    },
+    {
+      "typeSlow": "lamp",
+      "paceMs": 150
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "expectVisible": "row/p1"
+    },
+    {
+      "expectMissing": "row/p3"
+    }
+  ]
+}

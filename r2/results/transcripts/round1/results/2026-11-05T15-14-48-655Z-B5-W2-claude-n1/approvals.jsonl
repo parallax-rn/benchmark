@@ -1,0 +1,4 @@
+{"t":1793891763634,"card":"Wants to reload the app","tool":"mcp__parallax__app_reload","allow":true}
+{"t":1793891772385,"card":"Wants to tap “popular/p1”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793891776756,"card":"Wants to tap “product/add”","tool":"mcp__parallax__device_tap","allow":true}
+{"t":1793891779173,"card":"Wants to run the app command “navigate”","tool":"mcp__parallax__app_command_run","allow":true}

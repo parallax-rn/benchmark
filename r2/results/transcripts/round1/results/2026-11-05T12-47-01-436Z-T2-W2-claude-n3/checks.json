@@ -1,0 +1,76 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Product",
+          "params": {
+            "id": "p1"
+          }
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "product/add"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "open": "Cart"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "api": "rearm"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "cart/coupon"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "type": "SAVE10"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "cart/apply"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "wait": 1000
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectTextMatches": {
+            "cart/coupon-message": "\\S"
+          }
+        },
+        "ok": true,
+        "got": [
+          {
+            "id": "cart/coupon-message",
+            "want": "\\S",
+            "ok": true,
+            "got": "Could not apply the coupon (500). Try again."
+          }
+        ]
+      }
+    ]
+  }
+]

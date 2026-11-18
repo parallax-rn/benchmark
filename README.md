@@ -8,6 +8,9 @@ This repository has the harness, the app, the bugs and every counted run. Full w
 
 Parallax itself is closed source and installs from npm (`@parallax-rn/mcp`); this repository is only the benchmark.
 
+R2, a different question (a person hands a bug to the agent, with and without the Parallax window), is in [`r2/`](r2) and described in
+[R2](#r2-a-person-hands-the-bug-to-the-agent) below.
+
 ## Results
 
 Rerun of 2026-11-13 on a cut-off date: every tool on its npm `latest` of that day (no nightly, next or local build), all four setups
@@ -226,3 +229,74 @@ together.
 
 If you maintain one of these tools and we set it up or used it wrongly, or if you find an error, open an issue. We will fix the page and
 rerun if needed.
+
+# R2: a person hands the bug to the agent
+
+Does the Parallax window help when a person hands a bug to a coding agent? R1 compared device tools; R2 compares three ways the same bug
+reaches the agent, with the agent, the model, the app and the tools the same in all three:
+
+- **W0, ticket only:** a written ticket, no person. The agent reproduces the bug itself.
+- **W1, person at a Simulator:** a person sends the same words and a screenshot, with the app left in the state that shows the bug.
+- **W2, person in the Parallax window:** a person sends the same words from the window with a picked element or an attached network
+  request, and answers the window's approval cards.
+
+The tasks are five new bugs in R1's shop app (T1 to T5) and three of R1's bugs as controls (C1, B6, B5). The thresholds were written down
+and published before the first counted run, in parallax-rn/parallax-releases:
+[`benchmarks/r2-prereg.json`](https://github.com/parallax-rn/parallax-releases/blob/main/benchmarks/r2-prereg.json) and, for round 2,
+[`benchmarks/r2-prereg-amendment-1.json`](https://github.com/parallax-rn/parallax-releases/blob/main/benchmarks/r2-prereg-amendment-1.json)
+(its versions, the standing input rule and cold and warm runs; no threshold changed). Full write-up with the verdict:
+https://parallax-rn.dev/benchmark/r2-claude
+
+## What R2's results are, and are not
+
+- **Claude Code only.** Every run in `r2/results` is Claude Code with Claude Sonnet 5.5. Codex will run W0 and W2 later, as separate runs
+  on the same pinned versions, and gets its own write-up; nothing here is Codex.
+- **Two rounds.** Round 1 ran Parallax 0.1.0-beta.5 (2026-11-05); round 2 ran the versions pinned on its cut-off day, 2026-11-16
+  (`r2/round2/cutoff.json`: Parallax 0.1.0-beta.12 and its packaged window, Claude Code 2.1.325). The page reports round 2 and compares
+  it with round 1.
+- **The person is a script.** The person's steps in W1 and W2 (taps, words, the pick, the attach, the answers to the cards) are scripted,
+  the same in every run: AXe in W1, the window's own drive file in W2. Attended minutes of a real person were not measured.
+- **A cold start was not measured.** Every run of round 2 started warm: the prompt cache is shared per agent config, not per setup, and
+  other use of the same model kept Claude Code's system prefix cached, so no run started cold despite the planned idle time. Runs that
+  were warm by the rule but wrote part of their prefix are listed in `r2/results/report-round2.md`.
+- One model, one app, one machine; three runs per task and setup, one per control.
+
+## What is in `r2/`
+
+- The harness as it ran: `run-cell.mjs` (one run), `batch.mjs` (a shuffled batch with its seed, in sessions), `check.mjs` (the tasks
+  proven without an agent), `lib/` (the scripted person, the window's driver, the metrics, cold and warm, the preflight), `report.mjs`
+  (the table and the verdict read from the pre-registration), `blind.mjs` (the blind grader's packet), `summary.mjs` (the page's data and
+  `runs.csv`), `pin.mjs` and `setup.mjs` (round 2's cut-off and its configs), `export-public.mjs` (this folder).
+- The app's changes for R2 (`app/`) on top of R1's app, and the tasks (`tasks/<id>/`: the bug's files, `key.json` with the cause and the
+  check, `human.json` with the person's words and steps). C1, B6 and B5 use R1's bugs (`r1/bugs`).
+- `prereg.json` and `round2/prereg-amendment.json`: the published pre-registration files, byte for byte.
+- `results/`:
+  - `runs.csv`: one line per counted run of both rounds (round, task, setup, run, fixed, cause_blind, cost_usd, wall_s, agent_s,
+    human_actions and the four kinds of tokens, start, agent); `runs-index.csv`: the run folders, set-aside runs included;
+  - `report-round1.md` and `report-round2.md`: each round's table (`report.mjs --md`), with the set-aside runs and git attempts;
+  - `blind/round1` and `blind/round2`: the masked packet the grader saw, the map from its ids to runs, and the grades;
+  - `transcripts/round1|round2/results|results-invalid/<run>/`: every run's transcript, its subagents' transcripts, the approval cards'
+    answers (`approvals.jsonl`), the checks after the agent (`checks.json`) and, for a set-aside run, why (`INVALID.txt`). Copied through
+    `r1/lib/scan-transcript.mjs` (home folder, e-mail addresses and tokens removed). Screen recordings and logs are not included.
+
+## Run R2
+
+R2 reuses R1's base app and native build (steps 1 to 3 of *Run it* above; R2 changes JavaScript only), R1's driver and R1's mock API with
+R2's additions. Commands run from the root of this repository, as for R1; results go under `~/ParallaxBench/r2`.
+
+1. **Check the harness (no simulator, no agent).** `node --test r2/*.test.mjs`. A few tests read local data and are skipped without it.
+2. **Pin the versions.** `node r2/pin.mjs --date YYYY-MM-DD` installs Claude Code and Codex at npm's `latest` of that day into
+   `~/ParallaxBench/tools` and checks the Parallax release zip; `node r2/setup.mjs window <zip>` unpacks the window and
+   `node r2/setup.mjs arms` runs Parallax's own `setup claude` into each arm's isolated config.
+3. **Prove the tasks without an agent.** `node r2/check.mjs --udid <udid>`: the correct app must pass every check, each task must fail its own.
+4. **Run.** One cell: `node r2/run-cell.mjs --udid <udid> --task <T1..T5|C1|B6|B5> --arm <W0|W1|W2> --model <model> [--n 1] [--dry-run]`.
+   A batch: `node r2/batch.mjs --udid <udid> --tasks T1,T2,T3,T4,T5,C1,B6,B5 [--arms W0,W1,W2] [--runs 3] [--seed <n>] [--limit <runs>] [--dry-list]`.
+   A batch checks the machine before every run (`lib/preflight.mjs`) and stops on a transcript flag, a new crash report or its cost limit.
+5. **Grade and report.** `node r2/blind.mjs --out <dir> --map <dir>`, grade the packet, `node r2/blind.mjs --merge <grades.json> --map <dir>`;
+   then `node r2/report.mjs --md <out.md>` and `node r2/summary.mjs --json <out.json> --runs <runs.csv>`.
+
+Not in this repository, as for R1: the plain React Native project, the arms' configs (made by `setup.mjs` from the pinned Parallax), the
+Claude Code OAuth token, and the Parallax window itself (download it from parallax-rn/parallax-releases). W2 drives the packaged window
+through its measuring drive file, which is how the scripted person clicks; the window's buttons are clicked with DOM events, the device
+input is real.
+

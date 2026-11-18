@@ -1,0 +1,31 @@
+{
+  "_comment": "Plan 0027. The human's part, the same in W1 (AXe and a screenshot) and W2 (the window's drive file). `words` is the blind describer's text, frozen verbatim (noise included); W0's ticket is the same words.",
+  "words": "I opened the home screen and the product list under the four blue buttons looks wrong. \"Lantern\" is listed twice with different prices ($12.99 and $12.00), and there are two lamp items (\"Lamp shade\" and \"Desk lamp\") that look similar. I'm not sure which Lantern is the real one.",
+  "setup": [
+    {
+      "expectVisible": "home/products"
+    },
+    {
+      "expectVisible": "deals/p2/price"
+    }
+  ],
+  "pick": {
+    "id": "deals/p2/price"
+  },
+  "attach": null,
+  "approvals": {
+    "deny": [],
+    "otherwise": "allow"
+  },
+  "followUp": {
+    "words": "Still wrong.",
+    "repeatPick": true
+  },
+  "describer": {
+    "frozen": "2026-11-05",
+    "model": "claude-sonnet-5-5 (subagent, one case per call, the symptom screenshot from the R2.1 matrix and nothing else)",
+    "screenshot": "~/ParallaxBench/r2/results/2026-11-05T08-40-12-384Z-matrix/T1-symptom.png",
+    "did": "You opened the app's home screen.",
+    "knows": null
+  }
+}

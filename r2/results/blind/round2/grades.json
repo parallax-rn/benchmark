@@ -1,0 +1,272 @@
+[
+ {
+  "id": "g001",
+  "cause": false,
+  "note": "hedged; no 500/HTML or json-before-status cause"
+ },
+ {
+  "id": "g002",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g003",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g004",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g005",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g006",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g007",
+  "cause": false,
+  "note": "hedged; non-JSON reply only vaguely, no 500 HTML"
+ },
+ {
+  "id": "g008",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g009",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g010",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g011",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g012",
+  "cause": false,
+  "note": "network/no-discount paths only, not the JSON parse of a 500 body"
+ },
+ {
+  "id": "g013",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g014",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g015",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g016",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g017",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g018",
+  "cause": false,
+  "note": "generic network or parse error, unconfirmed, no 500 HTML"
+ },
+ {
+  "id": "g019",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g020",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g021",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g022",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g023",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g024",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g025",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g026",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g027",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g028",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g029",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g030",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g031",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g032",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g033",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g034",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g035",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g036",
+  "cause": false,
+  "note": "did not find the cause; generic silent-failure path"
+ },
+ {
+  "id": "g037",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g038",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g039",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g040",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g041",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g042",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g043",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g044",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g045",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g046",
+  "cause": false,
+  "note": "unconfirmed; generic failed request or invalid JSON"
+ },
+ {
+  "id": "g047",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g048",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g049",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g050",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g051",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g052",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g053",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ },
+ {
+  "id": "g054",
+  "cause": true,
+  "note": "names the keyCause mechanism"
+ }
+]

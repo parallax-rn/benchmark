@@ -1,0 +1,55 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Products"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectVisible": "row/p3"
+        },
+        "ok": true,
+        "got": "visible"
+      },
+      {
+        "step": {
+          "expectPixel": {
+            "near": "row/p3",
+            "dx": 22,
+            "color": "#f0883e"
+          }
+        },
+        "ok": true,
+        "got": "#f0883e"
+      },
+      {
+        "step": {
+          "expectPixel": {
+            "near": "row/p1",
+            "dx": 22,
+            "color": "#d1242f"
+          }
+        },
+        "ok": true,
+        "got": "#d1242f"
+      },
+      {
+        "step": {
+          "expectPixel": {
+            "near": "row/p4",
+            "dx": 22,
+            "color": "#2da44e"
+          }
+        },
+        "ok": true,
+        "got": "#2da44e"
+      }
+    ]
+  }
+]

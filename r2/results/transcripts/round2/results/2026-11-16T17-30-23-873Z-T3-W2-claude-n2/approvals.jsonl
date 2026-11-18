@@ -1,0 +1,2 @@
+{"t":1794850296258,"card":"Wants to tap “search/input”","tool":"mcp__parallax__device_tap","allow":true,"always":true}
+{"t":1794850324119,"card":"Wants to reload the app","tool":"mcp__parallax__app_reload","allow":true}

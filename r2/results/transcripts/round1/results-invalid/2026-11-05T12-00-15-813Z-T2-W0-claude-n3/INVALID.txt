@@ -1,0 +1,1 @@
+Set aside 2026-11-05: ran while the harness shell's argv named the task ("--tasks":"T2" in the launching command line, visible to ps); the batch was stopped by PID and this run finished on its own.

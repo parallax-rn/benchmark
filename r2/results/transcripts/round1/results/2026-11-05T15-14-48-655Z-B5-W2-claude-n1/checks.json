@@ -1,0 +1,37 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Product",
+          "params": {
+            "id": "p1"
+          }
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "product/add"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "open": "Cart"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectVisible": "cart/checkout"
+        },
+        "ok": true,
+        "got": "visible"
+      }
+    ]
+  }
+]

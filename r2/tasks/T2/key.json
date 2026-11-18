@@ -1,0 +1,52 @@
+{
+  "id": "T2",
+  "category": "an event that already happened (network history)",
+  "windowGives": "the network history and the request attached",
+  "contrast": "W2 vs W1 and W0",
+  "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+  "cause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+  "where": "src/coupon.ts applyCoupon",
+  "cause_terms": [
+    "500|server error|status|res\\.ok|!ok",
+    "json|HTML|parse|catch|swallow"
+  ],
+  "check": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    },
+    {
+      "api": "rearm"
+    },
+    {
+      "tap": "cart/coupon"
+    },
+    {
+      "type": "SAVE10"
+    },
+    {
+      "tap": "cart/apply"
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "expectTextMatches": {
+        "cart/coupon-message": "\\S"
+      }
+    }
+  ],
+  "beforeAgent": [
+    {
+      "api": "consume"
+    }
+  ]
+}

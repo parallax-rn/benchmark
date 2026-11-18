@@ -1,0 +1,72 @@
+{
+  "_comment": "Amendment 1 to R2's pre-registration (r2-prereg.json, frozen 2026-11-05), for round 2. It changes only what is listed under 'changes'; every threshold and every other field stays as frozen, and round 1's results stay as published.",
+  "amends": {
+    "file": "r2-prereg.json",
+    "frozen": "2026-11-05"
+  },
+  "written": "2026-11-16",
+  "changes": {
+    "versions": {
+      "rule": "One cut-off date, the day Parallax 0.1.0-beta.12 is published to npm; every tool and both agents are pinned to npm latest of that day and run from those pins (Codex later, on the same pins).",
+      "cutoff": "2026-11-16",
+      "parallax": {
+        "mcp": "@parallax-rn/mcp@0.1.0-beta.12 (npm)",
+        "window": "Parallax 0.1.0-beta.12 (packaged release, Parallax-0.1.0-beta.12-arm64.zip, sha256 36cbf072853f594a0c93c225c46214578ee68533cce815ae6d125908faf07fb5)"
+      },
+      "claudeCode": "2.1.325",
+      "codex": "0.169.0"
+    },
+    "approvals": "W2's human answers the first strict input card (a tap, swipe, typing or navigation) that the task's policy allows with 'Always allow taps, swipes and typing' (Parallax's standing input rule, since beta.7); after it the core asks no more for those. Denied tools (T5's reload, launch and boot) are still asked and denied on every card. Each card the human answers is one human action, as in round 1.",
+    "coldWarm": "Added by the maintainer (2026-11-16). Round 1 had no cold run: its runs went back to back inside Claude Code's 1-hour prompt cache. In round 2 each agent's runs are split into batch sessions at least 65 minutes apart, and each arm's first run of a session starts cold (a single-run control is swapped with that arm's next three-run cell, so the controls stay warm). Whether a run was cold is read from its own first model call, not from the schedule: cold when under half of that call's input came from the cache (result.json: cold, start.idleMin, start.firstCall). The report gives warm and cold cost in separate rows. The verdict's cost medians (H1's 15% and H2's control cost) read the warm runs only, and its counts (fixes, wrong first edits, confident wrong answers, human actions) read every run, because a cold cache changes the price, not what the agent can do. No threshold changes.",
+    "codex": {
+      "arms": [
+        "W0",
+        "W2"
+      ],
+      "model": "gpt-5.6-terra",
+      "effort": "medium",
+      "note": "Codex runs W0 and W2 only (decision 8). H1 and H2 are read on Claude's runs, as frozen; Codex's runs are reported beside them in the same table, not in the verdict. Its cost is the OpenAI list price, read on the run day with its source, times the tokens it reports."
+    }
+  },
+  "unchanged": {
+    "model": "claude-sonnet-5-5",
+    "device": "iOS simulator, iPhone 17 Pro, iOS 26.3",
+    "arms": {
+      "W0": "a written ticket, no human; the agent reproduces it itself",
+      "W1": "a human at a plain Simulator: the same words and a screenshot, the app left in the bug state",
+      "W2": "a human with the Parallax window: the same words sent from the window with a picked element or an attached network request, approvals on the window's cards"
+    },
+    "runsPerCell": 3,
+    "controlRunsPerArm": 1,
+    "windowTasks": [
+      "T1",
+      "T2",
+      "T4",
+      "T5"
+    ],
+    "humanTasks": [
+      "T3"
+    ],
+    "controls": [
+      "C1",
+      "B6",
+      "B5"
+    ],
+    "H1": {
+      "statement": "On the window tasks W2 beats W1 on at least one of: tasks fixed, wrong-file first edits, confident wrong answers, median agent cost; and W2 costs the human no more actions than W1.",
+      "falsifiedIf": {
+        "all": [
+          "fixed(W2) == fixed(W1) over the window tasks",
+          "wrongFirstEdits(W2) >= wrongFirstEdits(W1) and confidentWrong(W2) >= confidentWrong(W1)",
+          "medianCost(W2) > 0.85 * medianCost(W1)"
+        ]
+      },
+      "alsoFailedIf": "humanActions(W2) > humanActions(W1), or attended minutes in the hand runs higher for W2"
+    },
+    "H2": {
+      "statement": "On the controls W0, W1 and W2 are equal within the spread of their three runs.",
+      "falsifiedIf": "a control's median cost or time in W2 is above the highest of the three W1 runs, or W2 fixes fewer controls than W1"
+    },
+    "reported": "every task on its own as well as pooled; T3 separates W0 from W1 and W2, never W2 from W1"
+  }
+}

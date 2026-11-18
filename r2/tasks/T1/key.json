@@ -1,0 +1,24 @@
+{
+  "id": "T1",
+  "category": "which element (pick)",
+  "windowGives": "pick",
+  "contrast": "W2 vs W1",
+  "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+  "cause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+  "where": "src/home/deal-price.ts dealPrice",
+  "cause_terms": [
+    "dealPrice|deal-price|Deals",
+    "parseFloat|comma|\"12,99\"|string"
+  ],
+  "check": [
+    {
+      "expectVisible": "home/products"
+    },
+    {
+      "expectText": {
+        "deals/p2/price": "$12.99",
+        "picks/p2/price": "$12.99"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Set aside 2026-11-05: the transcript scan flagged it (the agent listed the home folder, whose listing showed harness paths, and tried git, denied); rerun in the next batch.

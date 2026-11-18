@@ -1,0 +1,326 @@
+[
+  {
+    "id": "g001",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The Lantern showed two prices because the \"Deals\" strip formatted prices differently from the \"Picks\" strip. The API returns Lantern's price as the string `\"12,99\"`, with a comma. `src/home/deal-price.ts` used `parseFloat`, which stops at the comma and returned 12, so Deals showed $12.00. Picks uses `formatPrice`, which handles the comma and showed $12.99. There is only one Lantern (p2). It appears in both the Picks and Deals strips, which is why it looked listed twice. \"Lamp shade\" (p5) and \"Desk lamp\" (p1) are separate products and were never part of the bug.\n\nI changed `dealPrice` to call the shared `formatPrice` from `src/price.ts`. After reloading the app, both Lantern entries show $12.99.\n\nThe same string price would also have been wrong for Notebook (`\"4,50\"`) in Deals. Both Lantern entries still appear on Home because the strips overlap. I left that as it is, since the strips are set up that way deliberately."
+  },
+  {
+    "id": "g002",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cause was a cache key collision in `src/cartActions.ts`. `useCartTotal` caches totals under `cartKey`, which only used the product ids and the total item count. After you pressed − on Desk lamp and + on Lantern, the cart was Desk lamp ×1 and Lantern ×2. That has the same ids and the same 3 items as the earlier Desk lamp ×2 and Lantern ×1, so it reused that cart's cached total of $91.99. I changed `cartKey` to include each line's id, quantity and price (`id:qty:price`), so different carts no longer share a cached total. I checked it in the running app. I reproduced the exact steps, and after − on Desk lamp and + on Lantern the cart now shows Desk lamp ×1, Lantern ×2 and \"Total: $65.48\"."
+  },
+  {
+    "id": "g003",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The Search screen now shows only Desk lamp and Lamp shade for \"lamp\".\n\nThe cause was a race condition in `src/screens/Search.tsx`. Each keystroke fired its own `/search` request, and a slower response for an earlier prefix such as \"la\" could arrive after the response for \"lamp\". It then overwrote the results with Lantern, Ladder and Label maker. The API itself returns the correct two items for \"lamp\". I changed the search effect to ignore responses from superseded queries, using a cleanup flag. After a reload I typed \"lamp\" in the running app and got the correct list.\n\nI read your [tool] [context] message for this."
+  },
+  {
+    "id": "g004",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The dots were grey because of letter case. The merchandising sheet in `src/marks.ts` spells some offers capitalised (`p1:Sale`, `p3:Clearance`, `p4:New`) and others lowercase (`p6:sale`, `p7:clearance`). `OFFER_COLORS` only has lowercase keys, so the capitalised ones found no colour and fell back to the grey `NO_OFFER`. That is why Mug and Notebook looked right while Desk lamp, Ladder and Label maker did not. I lowercased the offer names when the sheet is parsed, in that same file.\n\nAfter reloading, the Products list in the simulator shows Desk lamp red, Ladder orange, Label maker green, and Mug and Notebook unchanged. Lantern, Lamp shade and Pen set stay grey because the sheet has no offer for them."
+  },
+  {
+    "id": "g005",
+    "symptom": "The cart total is wrong when the same product is added twice.",
+    "keyCause": "cartTotal adds each item's price once and ignores its quantity.",
+    "answer": "The cause was in `cartTotal` in `src/cart.ts`. It summed each line's unit `price` and ignored `qty`, so two Desk lamps totalled $39.50. I changed it to `price * qty`. I reloaded the app, added the Desk lamp twice and opened the cart. The total now reads $79.00.\n\nThe cart row still shows the unit price ($39.50) next to \"Desk lamp x2\". I left that as is, since it's the per-item price."
+  },
+  {
+    "id": "g006",
+    "symptom": "The Checkout button is missing on the Cart screen.",
+    "keyCause": "AsyncStorage holds a stale 'flags' value from an earlier version ({\"newCheckout\": false}); useFlags merges it over the defaults and hides Checkout.",
+    "answer": "The Checkout button was missing because the simulator had a saved override, `newCheckout = false`, in the app's AsyncStorage. `Cart.tsx` only showed Checkout when that flag was on, and `useFlags` merges the stored value over its default of `true`. Nothing in the app writes that value, so it was left over from earlier. I removed the flag check from `src/screens/Cart.tsx`, along with the unused `useFlags` import and call. Checkout now shows whenever the cart has items. I haven't tapped Checkout to complete a purchase.\n\nAfter a reload, with the stale flag still saved on the device, I added the Desk lamp and opened the cart. It shows \"Total: $39.50\" and a `cart/checkout` \"Checkout\" button below it. I didn't touch `src/flags.ts`, so any other screen that reads flags would still be affected by the stale value."
+  },
+  {
+    "id": "g007",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "Searching \"lamp\" in the running app now shows only Desk lamp and Lamp shade, next to each other.\n\nThe cause was a race condition in `src/screens/Search.tsx`. The search effect sent a request for every keystroke and saved whichever response arrived last. The slow response for \"l\" (Lantern, Ladder, Label maker and the rest) could arrive after the response for \"lamp\" and overwrite it. The server's `/search?q=lamp` returns the right two items.\n\nI fixed it by adding a cleanup function to the effect. When the query changes, the old request is marked stale and its result is ignored.\n\nI could only confirm this by typing the query one character at a time. The simulator keyboard dropped or reordered characters when I typed it all at once, so I couldn't test the fast-typing case that triggers the bug. I didn't see Lantern, Ladder or Label maker appear in the final list."
+  },
+  {
+    "id": "g008",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "I fixed it and checked it in the running app. I read your [tool] [context] message first.\n\nThe cause was in `src/marks.ts`. The merchandising sheet writes some offers capitalised (\"Sale\", \"Clearance\", \"New\") and others lowercase, but the colour lookup only matched lowercase. Desk lamp (p1), Ladder (p3) and Label maker (p4) are capitalised in the sheet, so they fell back to the grey default. Mug (p6) and Notebook (p7) are lowercase, which is why they looked right.\n\nI changed the map to lowercase and trim each offer name when it is built (`offer.trim().toLowerCase()`).\n\nAfter a reload, the Products list shows Desk lamp red, Ladder orange, Label maker green, Mug red and Notebook orange. Lantern, Lamp shade and Pen set stay grey because they have no offer in the sheet."
+  },
+  {
+    "id": "g009",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "I read your [tool] [context] item. The cause was a race in `src/screens/Search.tsx`. Each keystroke fired a search request, and the slower responses for the earlier queries \"l\" and \"la\" (which match Lantern, Ladder and Label maker) could arrive after the \"lamp\" response and overwrite it. The server's results were correct. I made the effect ignore responses from searches that are no longer current by adding a `stale` flag set in the effect's cleanup. After reloading the app and typing \"lamp\" in Search, only Desk lamp and Lamp shade show, next to each other. I typed the text in one go and did not try to reproduce the slow-response ordering, so that check shows the normal case still works."
+  },
+  {
+    "id": "g010",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The bug is fixed. The cart total is now $65.48, which matches 39.50 + 2 × 12.99. Fast Refresh picked up the change, and I read the total from the screen after it reloaded. I didn't press − or + again afterwards.\n\n**Cause:** `useCartTotal` in `src/cartActions.ts` kept a global cache of totals. The cache key was only the list of item ids plus the total item count, so it ignored the quantity of each line. Desk lamp ×1 + Lantern ×2 has the same key as an earlier cart with the same items and the same number of units (such as Desk lamp ×2 + Lantern ×1). The cache returned the stale $91.99 from that earlier cart.\n\n**Fix:** I removed the global cache. The total is now computed directly inside the existing `useMemo`, which is keyed on `items` and `discount`."
+  },
+  {
+    "id": "g011",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The grey dots came from a case mismatch. The merchandising sheet in `src/marks.ts` spells some offers with capitals (\"Sale\", \"Clearance\", \"New\") and others in lowercase. `OFFER_COLORS` only has lowercase keys, so the capitalised entries (Desk lamp, Ladder, Label maker) found no colour and fell back to grey. Mug and Notebook were already lowercase, which is why they looked right.\n\nI changed the sheet parsing to lowercase and trim each offer (`offer.trim().toLowerCase()`). After a reload, the Products screen shows Desk lamp red, Ladder orange, Label maker green, and Mug and Notebook unchanged. Lantern, Lamp shade and Pen set stay grey because they have no offer in the sheet."
+  },
+  {
+    "id": "g012",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cause was the total cache in `src/cartActions.ts`. It stored totals under a key made of the item ids plus the *sum* of all quantities. Two different carts could therefore share a key, and the stale total came back. Desk lamp ×2 + Lantern ×1 and Desk lamp ×1 + Lantern ×2 both have the same ids and 3 items, so the second cart showed the first one's $91.99. I changed `cartKey` to include each line's id, quantity and price (`id:qty:price`). In the running app I reproduced the sequence (− on Desk lamp, + on Lantern), and the total now reads $65.48 for Desk lamp ×1 and Lantern ×2, matching the expected 39.50 + 2 × 12.99."
+  },
+  {
+    "id": "g013",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "I read the [tool] [context] message. The cause was in `src/marks.ts`. The merchandising sheet writes some offers with a capital letter (`p1:Sale`, `p3:Clearance`, `p4:New`) and others in lowercase (`p6:sale`, `p7:clearance`). The color lookup only matched lowercase keys, so the capitalized ones fell back to grey. That is why Mug and Notebook looked right while Desk lamp, Ladder and Label maker did not. I changed the sheet parsing to trim each offer and lowercase it. After Fast Refresh, a screenshot of the Products list shows Desk lamp red, Ladder orange and Label maker green. Mug and Notebook are unchanged. Lantern, Lamp shade and Pen set stay grey because the sheet lists no offer for them."
+  },
+  {
+    "id": "g014",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The cause was a race in `src/screens/Search.tsx`. The search effect fired a request for each keystroke (\"l\", \"la\", \"lam\", \"lamp\") and wrote whichever response arrived last into the list. The slower \"la\" response, which matches Lantern, Ladder and Label maker, could land after the \"lamp\" one and overwrite it. The server was fine: `/search?q=lamp` returns only Desk lamp and Lamp shade. I added a `stale` flag with an effect cleanup, so a response for an outdated query is ignored. After reloading the app and typing \"lamp\", the list shows only Desk lamp and Lamp shade. I ran it once and the race is timing-dependent, so one clean run is good evidence, not proof."
+  },
+  {
+    "id": "g015",
+    "symptom": "The cart total is wrong when the same product is added twice.",
+    "keyCause": "cartTotal adds each item's price once and ignores its quantity.",
+    "answer": "The cart total was adding up one price per line and ignoring the quantity. I fixed it in two places and checked the result in the running app.\n\n- **`cartTotal` in `src/cart.ts`:** it summed `i.price` for each line. It now sums `i.price * i.qty`.\n- **Line text in `src/screens/Cart.tsx`:** it showed the unit price next to \"x2\". It now shows the line price, `item.price * item.qty`.\n\nAfter a reload I added the Desk lamp twice again, because reloading emptied the cart. The cart now shows \"Desk lamp x2 $79.00\" and \"Total: $79.00\". I didn't test the coupon field or the +/− buttons."
+  },
+  {
+    "id": "g016",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The bug is fixed. Typing \"lamp\" in Search now shows only Desk lamp and Lamp shade, next to each other.\n\n**Cause:** the search screen sent a request for each keystroke (\"l\", \"la\", \"lam\", \"lamp\") and showed whichever response arrived last. The slower response for \"l\" (Lantern, Ladder, Label maker and the rest) could land after the one for \"lamp\" and overwrite it. The server itself returns the right results for \"lamp\".\n\n**Fix:** in `src/screens/Search.tsx`, the effect now ignores a response if the query has changed since the request was sent. Only the latest query's results are shown.\n\nI reloaded the app and typed \"lamp\" once, and the list was correct. I didn't force a slow \"l\" response, so the race itself wasn't reproduced. The simulator's typing also dropped or garbled characters on my first attempts, so I reloaded before the clean run."
+  },
+  {
+    "id": "g017",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The bug was a race in `src/screens/Search.tsx`. Each keystroke started a search request, and whichever response arrived last replaced the list. The \"la\" response, which includes Lantern, Ladder and Label maker, could land after the \"lamp\" one. The server was fine: I checked it directly, and \"lamp\" returns only Desk lamp and Lamp shade.\n\nI changed the search effect to ignore stale responses. The effect now sets a `stale` flag in its cleanup, and a response only updates the list if that flag is still false.\n\nI then typed \"lamp\" in the running app. The list showed only Desk lamp ($39.50) and Lamp shade ($15.25), next to each other. The race depends on response timing, so one clean run doesn't prove it's gone, but the stale-response path is now closed."
+  },
+  {
+    "id": "g018",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The cause was in the \"Deals\" strip on Home. Its price formatter, `dealPrice` in `src/home/deal-price.ts`, used `parseFloat`. The API sends some prices as strings with a decimal comma, like `\"12,99\"`, and `parseFloat` stops at the comma, so Lantern showed as $12.00 there. The \"Picks\" strip uses the shared `formatPrice`, which handles the comma, so it correctly showed $12.99. That is why the same product appeared twice with two prices.\n\nI made `dealPrice` call the shared `formatPrice` from `src/price.ts`. After reloading the app, both Lantern cards show $12.99 and the other prices are unchanged. I checked this in the on-screen element list, not with a new screenshot. \"Lamp shade\" and \"Desk lamp\" are two separate products in the API (p5 at $15.25 and p1 at $39.50), so I left them alone."
+  },
+  {
+    "id": "g019",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The bug came from the Deals strip on the home screen. The API returns some prices as comma-decimal strings, such as `\"12,99\"`. `src/home/deal-price.ts` parsed them with `parseFloat`, which stops at the comma and returns 12, so the Lantern showed `$12.00` there and `$12.99` in Picks. I changed `dealPrice` to use the shared `formatPrice` from `src/price.ts`, which handles the comma format. After a reload, the running app shows Lantern at `$12.99` in both Picks and Deals, and the other prices on the screen look right. \"Lamp shade\" ($15.25) and \"Desk lamp\" ($39.50) are separate products in the API, so I left them alone. The real Lantern is the $12.99 one, and there was never a second Lantern, only the same one shown twice with different prices."
+  },
+  {
+    "id": "g020",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "The cause was in the app's coupon code, `src/coupon.ts`. When the server answered 500, the body was an HTML page. `res.json()` threw on it, and the `catch` returned an empty result, so the cart showed no message and left the total at $39.50. I changed it to parse the body defensively and return a visible error in three cases:\n- a non-OK response with no JSON (\"Could not apply the coupon (500). Try again.\");\n- a 200 response with no discount;\n- a network failure.\n\nI couldn't reproduce the 500 itself. The server now returns 200 for SAVE10, and pressing Apply in the app gave \"Coupon applied: 10% off\" and a total of $35.55, which was before my edit. After the edit I only confirmed there are no JS errors. I did not re-test the error path in the app. The server's occasional 500 is a separate problem, and its code isn't in this folder.\n\nI read your [tool] [context] message, which is where the report came from."
+  },
+  {
+    "id": "g021",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce your failure, so I haven't confirmed what caused it. The server returns `{\"discount\":0.1}` for SAVE10. In the app, before and after my changes, SAVE10 gave \"Coupon applied: 10% off\" and a total of $35.55.\n\nI did find two real defects in the coupon code, and I fixed both:\n\n- **Silent failures:** `applyCoupon` in `src/coupon.ts` returned an empty result when the request threw or the reply wasn't usable. `Cart.tsx` then showed nothing. That matches \"no message either way\". It now returns clear error messages, and `Cart.tsx` always shows one on failure.\n- **Stale totals:** `useCartTotal` in `src/cartActions.ts` cached totals by cart contents (item id and quantity), so a price change would leave the total stale. I removed that cache and the total is now computed directly.\n\nThe simulator's state could be what you hit, but I only suspect that. If it happens again, you should now see an error message instead of nothing. I didn't test the error messages in the app."
+  },
+  {
+    "id": "g022",
+    "symptom": "The Checkout button is missing on the Cart screen.",
+    "keyCause": "AsyncStorage holds a stale 'flags' value from an earlier version ({\"newCheckout\": false}); useFlags merges it over the defaults and hides Checkout.",
+    "answer": "The cause was a stale `flags.newCheckout = false` value saved in the app's AsyncStorage on this simulator. `Cart.tsx` only showed the Checkout button when `flags.newCheckout` was true, and `useFlags` lets a stored value override the default of `true`, so the button never appeared. I removed that flag check in `src/screens/Cart.tsx`, along with the now-unused `useFlags` import and call. Checkout now shows whenever the cart has items. I reloaded the app, added the Desk lamp and opened the cart. It shows Total $39.50 with a `cart/checkout` \"Checkout\" button below it. I didn't tap Checkout, so the order flow itself is untested. I also left the `flags.ts` module and the stored value in place."
+  },
+  {
+    "id": "g023",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The Lantern in the Deals strip showed $12.00 because `dealPrice` in `src/home/deal-price.ts` used `parseFloat`. The API sends some prices as comma-decimal strings (Lantern is `\"12,99\"`), and `parseFloat(\"12,99\")` stops at the comma and returns 12. I changed `dealPrice` to use the shared `formatPrice` from `src/price.ts`, which handles the comma.\n\nAfter reloading the app, Lantern (`p2`) reads $12.99 in both the Picks and Deals strips, and the Notebook (`p7`) deal now reads $4.50. There was only ever one Lantern. It appears twice because the code lists the same product in both strips, so I left that alone. \"Lamp shade\" and \"Desk lamp\" are two separate products.\n\nI read your [tool] message from the [context] to find this."
+  },
+  {
+    "id": "g024",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The Lantern was never duplicated in the data. The API has one Lantern (p2) with the price `\"12,99\"`, and the home screen shows it in both the \"Picks\" and \"Deals\" strips. The Deals strip formatted the price with `parseFloat`, which stops at the comma and returned 12, so it showed `$12.00`. The Picks strip uses the shared `parsePrice`/`formatPrice` helpers, which handle comma decimals, so it showed `$12.99`. The same product therefore looked like two different Lanterns.\n\nI changed `src/home/deal-price.ts` so `dealPrice` calls the shared `formatPrice`. After reloading the app, the accessibility tree shows Lantern at `$12.99` in both strips, and the other prices are unchanged. I did not take a new screenshot. \"Lamp shade\" (p5) and \"Desk lamp\" (p1) are separate products in the API, and I changed nothing for them."
+  },
+  {
+    "id": "g025",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "I read your [tool] [context] item. The two Lantern prices came from the Deals row. The API sends some prices as European-style strings, and Lantern's is `\"12,99\"`. `dealPrice` in `src/home/deal-price.ts` used `parseFloat`, which stops at the comma and returned 12, so the row showed `$12.00`. The Picks row already used the shared parser, so it showed `$12.99`. I changed `dealPrice` to call the shared `formatPrice` from `src/price.ts`, which handles the comma. After a reload, the Lantern card in Deals shows `$12.99`, matching Picks. It's the same single product (p2) appearing in two rows. \"Lamp shade\" (p5) and \"Desk lamp\" (p1) are separate products with different prices, so I left them alone."
+  },
+  {
+    "id": "g026",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cart total was wrong because of a bad cache key. `useCartTotal` in `src/cartActions.ts` caches totals by a key made of the line ids plus the total item count. After you pressed − on Desk lamp and + on Lantern, the cart held the same lines and the same item count (3) as before. The key matched the old entry, so the app showed the stale $91.99 instead of recomputing. I changed `cartKey` to include each line's id, qty and price (`id:qty:price`), so any quantity change gives a new key.\n\nI checked it in the running app. I added Desk lamp ×2 and Lantern ×1, which gave the correct $91.99. Then I pressed − on Desk lamp, which gave $52.49, and + on Lantern, which gave **$65.48**. That is the figure you expected.\n\nWhile reproducing, I noticed the product screen's \"In cart:\" count on the Lantern page showed 2 and then 3. The Lantern had been added only once, and the Desk lamp was already in the cart twice, so it looks like the count covers the whole cart rather than that product. I didn't investigate or change it."
+  },
+  {
+    "id": "g027",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The cause was a spelling mismatch in `src/marks.ts`. The merchandising sheet exports some offers capitalised (`Sale`, `Clearance`, `New`), but the colour lookup only knew the lowercase keys (`sale`, `clearance`, `new`). Rows with the capitalised spellings, Desk lamp, Ladder and Label maker, found no colour and fell back to grey. Mug and Notebook use lowercase spellings in the sheet, so they were already correct. I changed `markColor` to trim and lowercase the sheet value before the lookup. After a reload, the Products screen shows Desk lamp red, Ladder orange, Label maker green, and Mug and Notebook unchanged. Lantern, Lamp shade and Pen set aren't in the sheet and stay grey."
+  },
+  {
+    "id": "g028",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The cause was a case mismatch in `src/marks.ts`. The merchandising sheet spells offers inconsistently: `p1:Sale`, `p3:Clearance` and `p4:New` are capitalised, while `p6:sale` and `p7:clearance` are lowercase. The colour lookup only matched lowercase keys, so Desk lamp, Ladder and Label maker fell back to grey. I now trim and lowercase each offer name when parsing the sheet. After a reload, the Products screen shows Desk lamp red, Ladder orange and Label maker green. Mug and Notebook are unchanged, and Lantern, Lamp shade and Pen set stay grey because they have no offer."
+  },
+  {
+    "id": "g029",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "I read your [tool] [context] item. The Lantern showed two prices because the API sends its price as the string \"12,99\", with a comma. `dealPrice` in `src/home/deal-price.ts` used `parseFloat`, which stops at the comma and returned 12, so the Deals strip showed $12.00. The Picks strip parses the price correctly and showed $12.99. I changed `dealPrice` to use the shared `formatPrice` from `src/price.ts`. After a reload, `deals/p2/price` shows $12.99, matching `picks/p2/price`. The two lamps, \"Desk lamp\" (p1) and \"Lamp shade\" (p5), are separate products in the API, so I left them alone."
+  },
+  {
+    "id": "g030",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce the exact report. SAVE10 on the Desk lamp worked in the app (message \"Coupon applied: 10% off\", total $35.55), and the API returns `{\"discount\":0.1}` for it. What I did find is that `applyCoupon` in `src/coupon.ts` returned an empty result on a network error, and also on a 200 reply without a numeric discount. `Cart.tsx` only sets a message when there is a discount or an error, so those cases showed nothing and the total stayed at $39.50. I changed `applyCoupon` to return a clear error in those cases (and for an empty code), and `Cart.tsx` now always shows a message. I checked this in the app with an unknown code, which now shows \"Unknown coupon\". I did not trigger the network-failure or bad-reply paths, so those are untested. If the user still sees a blank message, the cause is something I didn't find."
+  },
+  {
+    "id": "g031",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The cause was a race in the Search screen (`src/screens/Search.tsx`). Each keystroke sent its own request, and nothing stopped an older request from landing last. The response for \"la\" (Lantern, Ladder, Label maker) could arrive after the response for \"lamp\" and overwrite it. The server was fine: `/search?q=lamp` returns only Desk lamp and Lamp shade. I made the effect ignore any response whose query has since changed, by adding a `stale` flag that its cleanup sets. After a reload, typing \"lamp\" in the simulator now shows only Desk lamp followed by Lamp shade. The bug depends on response timing, so one clean run doesn't prove it can't recur."
+  },
+  {
+    "id": "g032",
+    "symptom": "On a product page the 'Restocked' line shows no date: it only says 'Restocked'.",
+    "keyCause": "daysAgo uses Intl.RelativeTimeFormat, which this app's Hermes does not provide (`Intl.RelativeTimeFormat` is undefined, so the constructor throws); the catch returns an empty string. Node and browsers have it, so the code looks right.",
+    "answer": "Both problems are fixed, and the Desk lamp page in the running app now shows \"Restocked 2 days ago\" with the SALE tag on the picture's top-right corner.\n\n**Restocked text:** `daysAgo` in `src/relative.ts` used `Intl.RelativeTimeFormat`, which throws in this app's JS engine. A `catch` turned that error into an empty string, so only \"Restocked\" showed. I replaced it with plain formatting: \"today\", \"1 day ago\" or \"N days ago\".\n\n**SALE tag:** `PromoBadge` in `src/PromoBadge.tsx` was pinned at `top: 0`, which put it under the status bar. I moved it to `top: 60`, matching the page's top padding. I also added `pointerEvents=\"none\"` so the badge's invisible box doesn't block taps.\n\nI hardcoded the 60 rather than using the device's safe-area inset, so it follows the page padding but not different notch sizes."
+  },
+  {
+    "id": "g033",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I read your [tool] [context] item. The coupon box gave no feedback because `applyCoupon` in `src/coupon.ts` swallowed every failure. The server's 500 came back as an HTML page, so `res.json()` threw, the `catch` returned an empty result, and `Cart.tsx` had nothing to show. I couldn't reproduce the 500 itself. The server now returns 200 for SAVE10 every time I tried, so it looks transient, and the app applied the coupon with a message and a total of $35.55.\n\nI changed `src/coupon.ts` so a non-JSON error body is parsed safely and a response with no valid discount gives \"Could not apply the coupon. Try again.\" A network failure now shows \"Could not reach the server…\". I only re-tapped Apply after the edit, which changed nothing on screen because the coupon was already applied. I didn't force a 500, so the new error messages haven't been seen in the running app."
+  },
+  {
+    "id": "g034",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "The cause was a race in `src/screens/Search.tsx`. Each keystroke started its own search request, and whichever response arrived last replaced the list. A slow response for an earlier prefix such as \"la\" could land after the \"lamp\" response and overwrite it with Lantern, Ladder and Label maker. The server itself returns only Desk lamp and Lamp shade for \"lamp\". I added a `stale` flag in the effect's cleanup so that responses for outdated queries are ignored. I checked this in the simulator by typing \"lamp\" into Search. The list shows only Desk lamp and Lamp shade, next to each other. I didn't try to reproduce the slow-response ordering, so that check shows the end state is right but doesn't prove the race itself is gone."
+  },
+  {
+    "id": "g035",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The cause was in `src/marks.ts`. The merchandising sheet writes offer names with inconsistent capitalisation: `Sale`, `Clearance` and `New` for p1, p3 and p4, and lowercase for p6 and p7. The colour lookup only matched the lowercase names. Desk lamp, Ladder and Label maker therefore fell back to the grey \"no offer\" colour. Mug and Notebook already used lowercase, so they looked right. I changed the sheet parsing to lowercase each offer name (`offer.toLowerCase()`). After reloading the app and opening Products, Desk lamp is red, Ladder is orange and Label maker is green. Mug and Notebook are unchanged. Lantern, Lamp shade and Pen set stay grey because they have no offer in the sheet."
+  },
+  {
+    "id": "g036",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "I read your [tool] message (#18). The cart total was wrong because `useCartTotal` in `src/cartActions.ts` cached totals under a key made of the item ids and the total quantity. Desk lamp ×2 + Lantern ×1 and Desk lamp ×1 + Lantern ×2 have the same key, so after you pressed − on Desk lamp and + on Lantern, the cart showed the earlier cart's total ($91.99) instead of $65.48. I removed the cache, so the total is now computed from the current items and the discount each time. I checked this in the running app. The cart shows $65.48 now. Pressing + on Desk lamp gave $104.98 and − brought it back to $65.48. I didn't re-run your exact sequence from the start."
+  },
+  {
+    "id": "g037",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The running app now shows Total: $65.48 for Desk lamp x1 and Lantern x2, which matches 39.50 + 2 × 12.99. Metro hot-reloaded the fix.\n\n**Cause:** `useCartTotal` in `src/cartActions.ts` cached totals in a module-level map. The cache key was only the item ids plus the total item count. Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 both have the same ids and 3 items, so they got the same key. After you pressed − on Desk lamp and + on Lantern, the app returned the stale total of $91.99 from the earlier cart state.\n\n**Fix:** I removed the cache. The total is now always `cartTotal(items)` with the discount applied. It's a cheap sum, and it's already memoized on `items` and `discount`. I only re-checked the total on the cart screen as it stood. I didn't press −/+ again or test a coupon."
+  },
+  {
+    "id": "g038",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce your reported failure, so I haven't confirmed its cause. In the running app SAVE10 already worked before I changed anything. The total went from $39.50 to $35.55, with \"Coupon applied: 10% off\" shown. The API also returned `{\"discount\":0.1}` every time I called it.\n\nThe one real defect I found is in `src/coupon.ts` and `src/screens/Cart.tsx`: any failure was swallowed silently. A network error, a non-JSON response or a reply with no usable discount produced no message and no price change. That matches what your user saw. It's my best guess at the cause, not a confirmed one.\n\nI changed those paths to show an error message instead of nothing. Non-JSON bodies and bad discount values are handled, and a network error now shows \"Could not reach the server…\". I reloaded the app and re-ran the success flow, and it still works. I didn't trigger the new error paths, because I couldn't make the server fail. I only tested the success case, not those messages."
+  },
+  {
+    "id": "g039",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cause was a stale cache in `useCartTotal` (`src/cartActions.ts`). It stored totals under a key made of the line ids plus the total item count. Desk lamp ×2 + Lantern ×1 and Desk lamp ×1 + Lantern ×2 both give the key `p1,p2|3`, so after you pressed − on Desk lamp and + on Lantern, the old $91.99 was returned. I removed the cache and the unused key helper, so the total is now computed straight from the items and the discount, memoized on `[items, discount]`. After the reload, the running app shows `Total: $65.48` for Desk lamp x1 and Lantern x2, which is the expected 39.50 + 2 × 12.99. I didn't tap − or + again to repeat the full sequence."
+  },
+  {
+    "id": "g040",
+    "symptom": "On a product page the 'Restocked' line shows no date: it only says 'Restocked'.",
+    "keyCause": "daysAgo uses Intl.RelativeTimeFormat, which this app's Hermes does not provide (`Intl.RelativeTimeFormat` is undefined, so the constructor throws); the catch returns an empty string. Node and browsers have it, so the code looks right.",
+    "answer": "Both problems are fixed, and the Desk lamp page now shows \"Restocked 2 days ago\" with the SALE tag below the status bar. I checked this in the running app after a reload.\n\n**Restocked text:** `daysAgo` in `src/relative.ts` used `Intl.RelativeTimeFormat`, which isn't available in this app's JS engine. The call threw, the `catch` returned an empty string, and only \"Restocked\" was left. I replaced it with plain formatting that gives \"today\", \"1 day ago\" or \"N days ago\".\n\n**SALE tag:** `PromoBadge` was positioned at `top: 0` and ignored the safe area. It now adds the top safe-area inset (`useSafeAreaInsets`) to its padding."
+  },
+  {
+    "id": "g041",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cart total was wrong because of a bad cache key. After the hot reload, the running app shows Desk lamp x1, Lantern x2 and Total: $65.48, which is correct. I only checked that one state, so I didn't press − and + again to repeat your exact steps.\n\n`useCartTotal` in `src/cartActions.ts` caches totals by a key made of the item ids plus the total quantity. Desk lamp x2 with Lantern x1 and Desk lamp x1 with Lantern x2 both produced the same key, so the second cart got the first cart's cached total. I changed `cartKey` to include each line's id, qty and price (`id:qty:price`), so different carts no longer share a key."
+  },
+  {
+    "id": "g042",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "I'm checking the fixed list in the app. Desk lamp is red, Ladder is orange, Label maker is green, and Mug and Notebook are unchanged. The grey dots left (Lantern, Lamp shade, Pen set) are products that have no offer in the sheet, so grey is correct for them.\n\nThe cause was in `src/marks.ts`. The merchandising sheet spells offers inconsistently (`Sale`, `Clearance`, `New` next to `sale`, `clearance`). The color lookup only matched the lowercase spelling, so the capitalized entries (Desk lamp, Ladder, Label maker) fell back to the grey no-offer color. I changed the sheet parsing to lowercase each offer (`offer.toLowerCase()`), so every spelling maps to its color. I reloaded the app and confirmed the Products list shows the right colors."
+  },
+  {
+    "id": "g043",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The cause was in the \"Deals\" strip on the home screen. `src/home/deal-price.ts` formatted prices with `parseFloat`. The API returns some prices as comma-decimal strings, so Lantern's \"12,99\" parsed as 12 and showed as $12.00. The Picks strip uses the shared `formatPrice`, which handles the comma, so it showed $12.99. There is only one Lantern (product p2). It appears in both strips because it is listed in both, and that is intended. Lamp shade (p5) and Desk lamp (p1) are separate products with different prices.\n\nI changed `dealPrice` to call the shared `formatPrice`. After reloading the app, both Lantern entries show $12.99, and Notebook shows $4.50 instead of $4.00 in the same strip.\n\nI didn't change the Popular strip, which uses its own currency formatter. Its prices (Mug, Label maker, Desk lamp) already looked right."
+  },
+  {
+    "id": "g044",
+    "symptom": "The cart total is wrong when the same product is added twice.",
+    "keyCause": "cartTotal adds each item's price once and ignores its quantity.",
+    "answer": "I read your [tool] [context] message (#20). The cause was `cartTotal` in `src/cart.ts`, which added up `i.price` for each line and ignored `i.qty`. Two lamps were therefore totalled as one, and the cart's cached totals copied that mistake. I changed it to `i.price * i.qty`. I checked in the running app by adding the Desk lamp twice and opening the cart. The line reads \"Desk lamp x2  $39.50\" and the total is now $79.00. The $39.50 on the line is the unit price, so I left it as it was. I didn't test the coupon discount or the +/− buttons."
+  },
+  {
+    "id": "g045",
+    "symptom": "I searched for \"lamp\" and the results show products that do not match, like Ladder and Lantern.",
+    "keyCause": "Search starts a request for every change of the text and writes whichever answer arrives last; a shorter query matches more products and the API answers it later, so the answer for \"la\" overwrites the one for \"lamp\". The effect has no guard against a stale answer.",
+    "answer": "Fixed and checked: typing \"lamp\" in Search now shows only Desk lamp and Lamp shade, next to each other.\n\nThe cause was a race in `src/screens/Search.tsx`. The search ran on every keystroke, and the slower response for \"l\" (which includes Lantern, Ladder and Label maker) could arrive after the response for \"lamp\" and overwrite it. The server's `/search?q=lamp` returns only the two lamp items, so the server was fine. I changed the effect to ignore any response from an outdated query, using a `stale` flag set in the effect's cleanup.\n\nI reloaded the app and retyped \"lamp\" in the simulator. I only typed it once, so a single run can't prove the race is gone. The fix is the standard cancellation pattern."
+  },
+  {
+    "id": "g046",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce the user's exact failure, so I'm not certain this is their cause. In the running app, SAVE10 with the Desk lamp worked: the total went from $39.50 to $35.55 and showed \"Coupon applied: 10% off\". The server also answered correctly on every call I made (30 repeat calls, plus lowercase, trailing-space and empty codes).\n\nWhat I did find is a path that matches \"nothing changed and no message\". `applyCoupon` in `src/coupon.ts` returned an empty result when the request failed, and also when a 200 reply had no `discount`. `Cart.apply` showed nothing in both cases. I changed `coupon.ts` so those cases return a clear error, and `Cart.tsx` so any failed apply always shows a message. I only re-tapped Apply on the Cart screen after the edit, which gave no error and no visible change. I did not trigger a failure, so the new messages have not been seen on screen.\n\nI also noticed that after a failed code the old discount stays applied, and I left that alone. If the user can say whether they saw it on a flaky connection, that would help confirm the cause."
+  },
+  {
+    "id": "g047",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce your exact failure, and I haven't confirmed the fix against a failing request in the app.\n\nWhen I pressed Apply in the running app, SAVE10 worked: it showed \"Coupon applied: 10% off\" and the total went to $35.55. The API also answered correctly every time I called it directly. The likely cause is in `src/coupon.ts`. If the request failed or the server sent back something that wasn't JSON, the code swallowed the error and returned an empty result. The screen then showed no message and an unchanged total, which matches what you saw.\n\nI changed two things:\n- **`src/coupon.ts`:** a failed request now shows \"Could not reach the server…\", and a response with no discount or unreadable JSON shows \"Could not apply the coupon. Try again.\"\n- **`src/cartActions.ts`:** I removed a total cache keyed by cart contents. It wasn't causing this bug, but it could have kept a stale total if a price changed.\n\nAfter the edit I tapped Apply once more. It showed no errors and no visible change, so the success path still works. I didn't test the failure path in the app, so I haven't seen the new error messages on screen."
+  },
+  {
+    "id": "g048",
+    "symptom": "In the Products list the small coloured dots are grey for Desk lamp, Ladder and Label maker, while other products have coloured dots.",
+    "keyCause": "markColor looks the offer up in OFFER_COLORS by the sheet's spelling; the sheet writes Sale, Clearance and New with a capital letter, OFFERS keeps them as written and the lookup misses, so those rows get the grey NO_OFFER colour.",
+    "answer": "The cause was a case mismatch. The merchandising sheet in `src/marks.ts` spells some offers with capitals (\"Sale\", \"Clearance\", \"New\") and others in lowercase. The color lookup only matched lowercase, so Desk lamp, Ladder and Label maker fell back to grey, while Mug and Notebook matched. I changed the parsing to `offer.trim().toLowerCase()`. After a reload, the Products list in the simulator shows Desk lamp red, Ladder orange, Label maker green, and Mug and Notebook unchanged."
+  },
+  {
+    "id": "g049",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "The coupon now applies in the running app: SAVE10 shows \"Coupon applied: 10% off\" and the total changes from $39.50 to $35.55. I read your [tool] [context] message first.\n\n**Cause:** `applyCoupon` in `src/coupon.ts` called `res.json()` on every response. The 500 came back as an HTML page, so the parse threw. The `catch` returned an empty result, and the cart screen showed nothing, so the failure was silent.\n\n**Fix:** I changed `src/coupon.ts` so a non-JSON body no longer breaks the call. Non-OK responses now show the existing \"Could not apply the coupon (status)\" message. A response with no discount, or a network failure, now shows an error message too.\n\nI couldn't reproduce the 500 itself. When I called the API directly, SAVE10 returned 200 with a 10% discount, and my tap in the app got the same 200. So I didn't see the new error message appear in the app, and I don't know why the server returned a 500 for you. If it comes back, the app will now say so instead of staying blank."
+  },
+  {
+    "id": "g050",
+    "symptom": "I entered the coupon SAVE10 in the cart and pressed Apply. Nothing happened: no message, and the total did not change.",
+    "keyCause": "applyCoupon parses the response as JSON before looking at the status; the coupon service's first answer was a 500 with an HTML body, so res.json() threw, the empty catch returned {} and the cart showed nothing. A retry gets a normal answer, so it does not reproduce on demand.",
+    "answer": "I couldn't reproduce your exact failure, so my fix covers the likely cause rather than a confirmed one. In the running app, SAVE10 on the Desk lamp worked every time I tried it: the message read \"Coupon applied: 10% off\" and the total dropped from $39.50 to $35.55. The coupon API also returned `{\"discount\":0.1}` on every curl. The code did have two silent failure paths that would match what you saw, with an unchanged total and no message:\n\n- **Network or parse errors:** `applyCoupon` in `src/coupon.ts` returned `{}` when the request or the JSON parsing threw.\n- **Missing discount:** a 200 response without a numeric `discount` also left no message.\n\n`Cart.tsx` only set a message when there was a discount or an error string, so both cases showed nothing. I changed `applyCoupon` so a non-JSON body is tolerated and both cases now return a visible error (\"Could not reach the server…\" or \"Could not apply the coupon. Try again.\"). `Cart.tsx` now always sets a message. After reloading, I checked a bad code (BOGUS) in the app and it showed \"Unknown coupon\". I did not trigger the network-failure path, so that message is untested. If the bug happens again, you should now see which message appears, and that will show the real cause."
+  },
+  {
+    "id": "g051",
+    "symptom": "On the Home screen one of the small product cards shows the wrong price for Lantern: $12.00 instead of $12.99.",
+    "keyCause": "The Deals strip formats its prices with dealPrice, which uses parseFloat on the raw price; Lantern's price comes from the API as the string \"12,99\" and parseFloat stops at the comma, giving 12.",
+    "answer": "The cause was `dealPrice` in `src/home/deal-price.ts`. It used `parseFloat`, which reads the API's comma-decimal price `\"12,99\"` as `12`. The Deals strip therefore showed Lantern as $12.00, while the Picks strip, which uses the shared `formatPrice`, showed $12.99. The API returns only one Lantern (`p2`, $12.99), and both Home strips list it. The two prices were the same product shown with different parsing. I changed `dealPrice` to call the shared `formatPrice`/`parsePrice` in `src/price.ts`. After a reload, both Lantern entries show $12.99. \"Lamp shade\" and \"Desk lamp\" are two different products (`p5` and `p1`), so they need no fix."
+  },
+  {
+    "id": "g052",
+    "symptom": "The Checkout button is missing on the Cart screen.",
+    "keyCause": "AsyncStorage holds a stale 'flags' value from an earlier version ({\"newCheckout\": false}); useFlags merges it over the defaults and hides Checkout.",
+    "answer": "The Checkout button was hidden because the cart screen only showed it when the `newCheckout` flag was on. On this device that flag is saved as `false` in AsyncStorage, which overrides the default of `true`. The flag also gated the only checkout path, so affected users couldn't buy anything.\n\nI changed `src/screens/Cart.tsx` so Checkout shows whenever the cart has items, and removed the now-unused `useFlags` import and call. I checked it in the running app: after a reload, with Desk lamp x1 and a Total of $39.50, a blue Checkout button now appears under the total. I didn't tap Checkout to complete a purchase.\n\nI left `flags.ts` alone, so the stored `newCheckout = false` value is still on the device and still wins over the default. Nothing else reads the flag today. If you want the flag to keep controlling checkout, the screen needs an alternative checkout path for when it's off."
+  },
+  {
+    "id": "g053",
+    "symptom": "My cart has Desk lamp x1 and Lantern x2 but the total says $91.99; it should be $65.48. It went wrong after I changed the quantities with - and +.",
+    "keyCause": "useCartTotal caches totals by a key made of the line ids and the number of items, not each line's quantity; Desk lamp x2 + Lantern x1 and Desk lamp x1 + Lantern x2 have the same key, so the second shows the first's total.",
+    "answer": "The cart total was wrong because `useCartTotal` in `src/cartActions.ts` cached totals in a module-level map. The cache key was only the item ids plus the total quantity. Desk lamp ×2 + Lantern ×1 and Desk lamp ×1 + Lantern ×2 therefore produced the same key, and the old $91.99 was reused. I removed the cache and the unused `cartKey` helper, so the hook now computes `cartTotal(items)` with the discount inside `useMemo`, which already avoids recomputing on coupon keystrokes. `tsc` passes. I read your [tool] [context] message to find this. You declined the app reload, so I didn't reload. Fast Refresh had applied the change, and the running cart now shows \"Total: $65.48\" for Desk lamp ×1 and Lantern ×2, as expected."
+  },
+  {
+    "id": "g054",
+    "symptom": "On a product page the 'Restocked' line shows no date: it only says 'Restocked'.",
+    "keyCause": "daysAgo uses Intl.RelativeTimeFormat, which this app's Hermes does not provide (`Intl.RelativeTimeFormat` is undefined, so the constructor throws); the catch returns an empty string. Node and browsers have it, so the code looks right.",
+    "answer": "Both problems on the Desk lamp page are fixed, and I checked them in the running app.\n\n- **Restocked text:** the text now reads \"Restocked 2 days ago\". `daysAgo` in `src/relative.ts` used `Intl.RelativeTimeFormat`, which this app's JS engine doesn't support. The call threw, the `catch` returned an empty string, and the page showed only \"Restocked\". I replaced it with plain formatting (\"today\", \"1 day ago\", \"N days ago\").\n- **SALE badge:** the badge now sits at y=74 instead of y=12, below the status bar. It was positioned at `top: 0` and ignored the safe area. `PromoBadge` now adds the top safe-area inset to its padding, and I wrapped `App.tsx` in a `SafeAreaProvider` so that works.\n\nI read your [tool] [context] message (#19) first."
+  }
+]

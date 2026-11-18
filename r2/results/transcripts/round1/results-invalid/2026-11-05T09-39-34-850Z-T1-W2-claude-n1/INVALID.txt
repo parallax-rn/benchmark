@@ -1,0 +1,1 @@
+Set aside 2026-11-05: W2 blocked by the beta.4 inbox bug (plan 0027, Pilot C); harness attempts.

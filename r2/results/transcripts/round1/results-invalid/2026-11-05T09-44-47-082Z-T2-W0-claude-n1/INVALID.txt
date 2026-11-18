@@ -1,0 +1,1 @@
+Set aside 2026-11-05: the transcript scan flagged it (the agent listed or read harness files: bench/r2/mock-api.mjs through lsof in W0, ~/ParallaxBench in W1). Fixed in d635cf0 (the API runs from a comment-free copy); rerun.

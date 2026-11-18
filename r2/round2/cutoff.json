@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-16",
+  "madeAt": "2026-11-16T14:51:10.571Z",
+  "packages": {
+    "@parallax-rn/mcp": {
+      "version": "0.1.0-beta.12",
+      "published": "2026-11-16T14:30:05.587Z"
+    },
+    "@anthropic-ai/claude-code": {
+      "version": "2.1.325",
+      "published": "2026-11-13T20:07:25.823Z",
+      "dir": "tools/claude-2.1.325",
+      "bin": "tools/claude-2.1.325/node_modules/.bin/claude"
+    },
+    "@openai/codex": {
+      "version": "0.169.0",
+      "published": "2026-11-13T08:43:21.818Z",
+      "dir": "tools/codex-0.169.0",
+      "bin": "tools/codex-0.169.0/node_modules/.bin/codex"
+    }
+  },
+  "window": {
+    "release": "v0.1.0-beta.12",
+    "zip": "Parallax-0.1.0-beta.12-arm64.zip",
+    "sha256": "36cbf072853f594a0c93c225c46214578ee68533cce815ae6d125908faf07fb5",
+    "dir": "window-0.1.0-beta.12"
+  }
+}

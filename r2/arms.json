@@ -1,0 +1,22 @@
+{
+  "_comment": "Plan 0027, round 2 (the maintainer's decisions of 2026-11-16). One cut-off date, the day Parallax beta.12 is published to npm: Parallax's MCP and window, Claude Code and Codex are pinned to npm's latest that day (pin.mjs writes round2/cutoff.json; every agent runs from its pinned path, never PATH). Claude runs W0, W1 and W2 right after; Codex runs W0 and W2 after its limit renews (about 2026-11-21) on the same pins (decision 8). Arms as in round 1 (arms-round1.json): the agent's tools are the published Parallax MCP of the cut-off, set up by its own setup into isolated configs under ~/ParallaxBench/arms/<config>; W2's configs add the hooks and strict approvals with PARALLAX_RUN_DIR set to the window's run directory, and the scripted human answers the first allowed input card with 'Always allow taps, swipes and typing' (alwaysAllowInput). Codex: its auth.json is copied into a per-run CODEX_HOME made from the arm's template and removed with it; hooks run with --dangerously-bypass-hook-trust (only Parallax's are in the template); its shell runs as Claude's did, without a sandbox (--dangerously-bypass-approvals-and-sandbox), with git forbidden by an execpolicy rule (rules/bench.rules) and web search off; Parallax's tools need no Codex prompt in either arm (default_tools_approval_mode = approve; in W2 the window's card is the gate). Codex reports no cost: round2/prices.json holds the list prices read on the run day with their source. Results go to ~/ParallaxBench/r2/round2/results.",
+  "round": 2,
+  "resultsDir": "round2/results",
+  "windowDir": "window-round2",
+  "base": {
+    "allowedTools": ["Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "Bash", "TodoWrite", "mcp__parallax__*"],
+    "disallowedTools": ["Bash(git:*)", "WebFetch", "WebSearch", "Task", "Agent"]
+  },
+  "codex": {
+    "_comment": "The model and effort of the maintainer's own Codex config (2026-11-16); confirm before the Codex days.",
+    "model": "gpt-5.6-terra",
+    "effort": "medium",
+    "config": ["web_search=\"disabled\"", "check_for_update_on_startup=false"],
+    "flags": ["--dangerously-bypass-approvals-and-sandbox", "--dangerously-bypass-hook-trust", "--skip-git-repo-check"]
+  },
+  "arms": {
+    "W0": { "name": "ticket, no human", "config": "R2r2-plain", "codexConfig": "R2r2-codex-plain", "human": null, "policy": false },
+    "W1": { "name": "human at a plain Simulator", "config": "R2r2-plain", "human": "axe", "policy": "disallowed" },
+    "W2": { "name": "human with the Parallax window", "config": "R2r2-window", "codexConfig": "R2r2-codex-window", "human": "window", "policy": "card", "alwaysAllowInput": true, "setup": ["--hook", "--strict-approvals"] }
+  }
+}

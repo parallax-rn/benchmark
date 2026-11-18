@@ -1,0 +1,1 @@
+Set aside 2026-11-17 by the batch stop rule: the transcript scan flagged 4 lines of git use (one Bash call with git ls-files to list the project, denied by the permission rules). As round 1 (plan 0027, T2 W0 n1), the run does not count and T4 W1 n3 is run again in this session.

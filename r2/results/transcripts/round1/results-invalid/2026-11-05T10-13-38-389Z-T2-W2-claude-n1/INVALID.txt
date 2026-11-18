@@ -1,0 +1,1 @@
+Set aside 2026-11-05: beta.5 gate attempt where the MCP server never connected: setup registered a local tarball as `npx -y <tgz>`, which runs the .tgz path as a command (Permission denied). Re-registered as `npx -y --package=<tgz> parallax-mcp` (the hooks' form) and rerun.

@@ -1,0 +1,76 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": false,
+    "log": [
+      {
+        "step": {
+          "expectVisible": "home/products"
+        },
+        "ok": true,
+        "got": "visible"
+      },
+      {
+        "step": {
+          "expectText": {
+            "deals/p2/price": "$12.99",
+            "picks/p2/price": "$12.99"
+          }
+        },
+        "ok": false,
+        "got": [
+          {
+            "id": "deals/p2/price",
+            "want": "$12.99",
+            "ok": false,
+            "got": "$12.00"
+          },
+          {
+            "id": "picks/p2/price",
+            "want": "$12.99",
+            "ok": true,
+            "got": "$12.99"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turn": 2,
+    "ended": true,
+    "pass": false,
+    "log": [
+      {
+        "step": {
+          "expectVisible": "home/products"
+        },
+        "ok": true,
+        "got": "visible"
+      },
+      {
+        "step": {
+          "expectText": {
+            "deals/p2/price": "$12.99",
+            "picks/p2/price": "$12.99"
+          }
+        },
+        "ok": false,
+        "got": [
+          {
+            "id": "deals/p2/price",
+            "want": "$12.99",
+            "ok": false,
+            "got": "$12.00"
+          },
+          {
+            "id": "picks/p2/price",
+            "want": "$12.99",
+            "ok": true,
+            "got": "$12.99"
+          }
+        ]
+      }
+    ]
+  }
+]

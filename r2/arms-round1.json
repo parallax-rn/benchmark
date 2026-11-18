@@ -1,0 +1,50 @@
+{
+  "_comment": "Plan 0027's arms. The agent and its tools are the same in all three: Claude Code headless with the published Parallax MCP 0.1.0-beta.4 (its own setup, into an isolated CLAUDE_CONFIG_DIR under ~/ParallaxBench/arms/<config>/claude). W2's config adds the hooks (the session row and the nudge) and strict approvals (the window's card), both through beta.4's own setup with PARALLAX_RUN_DIR set to the window's run directory. W0 and W1 have no hooks: with no window they would wait 1.5 s on every event. The approval policy is the task's human.json: in W1 its denied tools are --disallowedTools, in W2 the scripted approver denies them on the card, W0 has no human and no policy.",
+  "package": "@parallax-rn/mcp@0.1.0-beta.5",
+  "window": "Parallax 0.1.0-beta.5, packaged, from the published release asset Parallax-0.1.0-beta.5-arm64.zip (sha256 19de8144a4853ba1f8d5f5db05657e8670e6efdc3da3d0d5de4fac5557fe4102), unpacked to ~/ParallaxBench/r2/window-b5-rel",
+  "base": {
+    "allowedTools": [
+      "Read",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "Bash",
+      "TodoWrite",
+      "mcp__parallax__*"
+    ],
+    "disallowedTools": [
+      "Bash(git:*)",
+      "WebFetch",
+      "WebSearch",
+      "Task",
+      "Agent"
+    ]
+  },
+  "arms": {
+    "W0": {
+      "name": "ticket, no human",
+      "config": "R2-plain-b5",
+      "human": null,
+      "policy": false,
+      "setup": "setup claude --yes --real-config --package @parallax-rn/mcp@0.1.0-beta.5"
+    },
+    "W1": {
+      "name": "human at a plain Simulator",
+      "config": "R2-plain-b5",
+      "human": "axe",
+      "policy": "disallowed",
+      "setup": "setup claude --yes --real-config --package @parallax-rn/mcp@0.1.0-beta.5"
+    },
+    "W2": {
+      "name": "human with the Parallax window",
+      "config": "R2-window-b5r",
+      "human": "window",
+      "policy": "card",
+      "setup": "setup claude --yes --real-config --hook --strict-approvals --package @parallax-rn/mcp@0.1.0-beta.5 (one run; PARALLAX_RUN_DIR=~/ParallaxBench/r2/px/run)"
+    }
+  },
+  "windowDir": "window-b5-rel",
+  "_history": "The pilot (2026-11-05) ran beta.4 (configs R2-plain, R2-window) and the beta.5 gate a candidate tarball (R2-window-b5); the counted runs use the configs below, made from the registry spec."
+}

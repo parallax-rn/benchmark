@@ -1,0 +1,48 @@
+[
+  {
+    "turn": 1,
+    "ended": true,
+    "pass": true,
+    "log": [
+      {
+        "step": {
+          "open": "Search"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "tap": "search/input"
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "typeSlow": "lamp",
+          "paceMs": 150
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "wait": 2500
+        },
+        "ok": true
+      },
+      {
+        "step": {
+          "expectVisible": "row/p1"
+        },
+        "ok": true,
+        "got": "visible"
+      },
+      {
+        "step": {
+          "expectMissing": "row/p3"
+        },
+        "ok": true,
+        "got": "missing"
+      }
+    ]
+  }
+]

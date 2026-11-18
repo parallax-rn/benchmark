@@ -1,0 +1,38 @@
+{
+  "_comment": "Plan 0027. The human's part, the same in W1 (AXe and a screenshot) and W2 (the window's drive file). `words` is the blind describer's text, frozen verbatim (noise included); W0's ticket is the same words.",
+  "from": "r1",
+  "words": "I added the Desk lamp and opened the cart. It shows Desk lamp x1 $39.50 and a Total of $39.50, but I can't find a Checkout button anywhere under the total, so I can't finish buying.",
+  "setup": [
+    {
+      "open": "Product",
+      "params": {
+        "id": "p1"
+      }
+    },
+    {
+      "tap": "product/add"
+    },
+    {
+      "open": "Cart"
+    }
+  ],
+  "pick": {
+    "id": "cart/total"
+  },
+  "attach": null,
+  "approvals": {
+    "deny": [],
+    "otherwise": "allow"
+  },
+  "followUp": {
+    "words": "Still wrong.",
+    "repeatPick": false
+  },
+  "describer": {
+    "frozen": "2026-11-05",
+    "model": "claude-sonnet-5-5 (subagent, one case per call, the symptom screenshot from the R2.1 matrix and nothing else)",
+    "screenshot": "~/ParallaxBench/r2/results/2026-11-05T08-40-12-384Z-matrix/B5-symptom.png",
+    "did": "You added Desk lamp to the cart and opened the cart.",
+    "knows": "The cart has a Checkout button under the total when it holds something."
+  }
+}
